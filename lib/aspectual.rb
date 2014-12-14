@@ -6,6 +6,7 @@ module Aspectual
     # aspects are added to one method, the first declared method will be
     # added last.
     @_before_aspects = Array(aspects[:before]).reverse
+    @_around_aspects = Array(aspects[:around]).reverse
     @_after_aspects  = Array(aspects[:after])
   end
 
@@ -14,7 +15,7 @@ module Aspectual
     return if @_defining_method
     if method_defined?(method_symbol)
 
-      %w{before after}.each do |position|
+      %w{before around after}.each do |position|
         current_aspects = instance_variable_get("@_#{position}_aspects")
         if current_aspects
           current_aspects.each do |aspect|
@@ -39,10 +40,12 @@ module Aspectual
     without_aspect_method_name = method_symbol.to_s + "_without_#{position}_" + aspect.to_s
 
     case position
-    when "after"
-      aspect_proc = lambda {|*args| send(without_aspect_method_name, *args); send(aspect, *args)}
     when "before"
       aspect_proc = lambda {|*args| send(aspect, *args); send(without_aspect_method_name, *args)}
+    when "around"
+      aspect_proc = lambda {|*args| send(aspect, *args, &Proc.new{send(without_aspect_method_name, *args)})}
+    when "after"
+      aspect_proc = lambda {|*args| send(without_aspect_method_name, *args); send(aspect, *args)}
     end
 
     define_method(with_aspect_method_name, aspect_proc)

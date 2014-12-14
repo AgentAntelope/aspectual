@@ -49,9 +49,29 @@ describe Aspectual do
       self
     end
 
+    def block_test_method_0
+      methods_called << "before_block_test_method_0_block"
+      yield
+      methods_called << "after_block_test_method_0_block"
+      self
+    end
+
+    def block_test_method_1
+      methods_called << "before_block_test_method_1_block"
+      yield
+      methods_called << "after_block_test_method_1_block"
+      self
+    end
+
     aspects before: :single_test_method
     def single_before_test_method
       methods_called << "single_before_test_method"
+      self
+    end
+
+    aspects around: :block_test_method_0
+    def single_around_test_method
+      methods_called << "single_around_test_method"
       self
     end
 
@@ -64,6 +84,12 @@ describe Aspectual do
     aspects before: [:array_test_method_0, :array_test_method_1]
     def array_before_test_method
       methods_called << "array_before_test_method"
+      self
+    end
+
+    aspects around: [:block_test_method_0, :block_test_method_1]
+    def array_around_test_method
+      methods_called << "array_around_test_method"
       self
     end
 
@@ -133,6 +159,28 @@ describe Aspectual do
         array_after_test_method
         array_test_method_0
         array_test_method_1
+      })
+    end
+  end
+
+  describe "around aspects" do
+    it "calls around aspect methods around the called method" do
+      test_instance = TestClass.new.single_around_test_method
+      expect(test_instance.methods_called).to eq(%w{
+        before_block_test_method_0_block
+        single_around_test_method
+        after_block_test_method_0_block
+      })
+    end
+
+    it "allows multiple aspects to be declared" do
+      test_instance = TestClass.new.array_around_test_method
+      expect(test_instance.methods_called).to eq(%w{
+        before_block_test_method_0_block
+        before_block_test_method_1_block
+        array_around_test_method
+        after_block_test_method_1_block
+        after_block_test_method_0_block
       })
     end
   end
