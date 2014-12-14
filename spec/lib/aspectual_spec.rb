@@ -102,7 +102,7 @@ describe Aspectual do
   describe "before aspects" do
     it "calls before aspect methods before the called method" do
       test_instance = TestClass.new.single_before_test_method
-      expect(test_instance.methods_called).to match_array(%w{
+      expect(test_instance.methods_called).to eq(%w{
         single_test_method
         single_before_test_method
       })
@@ -110,7 +110,7 @@ describe Aspectual do
 
     it "allows multiple aspects to be declared" do
       test_instance = TestClass.new.array_before_test_method
-      expect(test_instance.methods_called).to match_array(%w{
+      expect(test_instance.methods_called).to eq(%w{
         array_test_method_0
         array_test_method_1
         array_before_test_method
@@ -121,15 +121,15 @@ describe Aspectual do
   describe "after aspects" do
     it "calls before aspect methods before the called method" do
       test_instance = TestClass.new.single_after_test_method
-      expect(test_instance.methods_called).to match_array(%w{
-        single_test_method
+      expect(test_instance.methods_called).to eq(%w{
         single_after_test_method
+        single_test_method
       })
     end
 
     it "allows multiple aspects to be declared" do
       test_instance = TestClass.new.array_after_test_method
-      expect(test_instance.methods_called).to match_array(%w{
+      expect(test_instance.methods_called).to eq(%w{
         array_after_test_method
         array_test_method_0
         array_test_method_1
@@ -140,7 +140,7 @@ describe Aspectual do
   describe "mixed aspects" do
     it "calls all the aspect declarations in the correct order" do
       test_instance = TestClass.new.before_and_after_aspects_test_method
-      expect(test_instance.methods_called).to match_array(%w{
+      expect(test_instance.methods_called).to eq(%w{
         before_test_method_0
         before_test_method_1
         before_and_after_aspects_test_method
