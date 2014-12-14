@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    aspectual (0.0.2)
+    aspectual (0.1.0)
 
 GEM
   remote: https://rubygems.org/
@@ -22,6 +22,6 @@ PLATFORMS
 
 DEPENDENCIES
   aspectual!
-  bundler (~> 1.3)
+  bundler
   rake
   rspec
