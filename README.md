@@ -28,12 +28,12 @@ Create any methods you want as aspects (Aspectual will not add methods you don't
 
 Then declare your aspects
 
-    aspects before: :logging, after: :more_logging
+    aspects before: :logging, around: fancy_logging, after: :more_logging
     def foo
       "foo"
     end
 
-    aspects before: [:notify_user, :notify_admin], after: [:remove_temp_files, :play_sound]
+    aspects before: [:notify_user, :notify_admin], around: [:setup_and_teardown, :play_background_music], after: [:remove_temp_files, :play_sound]
     def bar
       "bar"
     end
