@@ -16,16 +16,16 @@ module Aspectual
     @_after_aspects  = Array(aspects[AFTER_ASPECT])
   end
 
-  def method_added(method_symbol)
+  def method_added(method_name)
     return unless has_aspects_declared?
     return if @_defining_method
-    if method_defined?(method_symbol)
+    if method_defined?(method_name)
 
       VALID_ASPECTS.each do |position|
         current_aspects = instance_variable_get("@_#{position}_aspects")
         if current_aspects
           current_aspects.each do |aspect|
-            define_aspect_method(method_symbol, position, aspect)
+            define_aspect_method(method_name:, position:, aspect:)
           end
         end
       end
@@ -38,13 +38,13 @@ module Aspectual
     @_before_aspects || @_after_aspects
   end
 
-  def define_aspect_method(method_symbol, position, aspect)
+  def define_aspect_method(method_name:, position:, aspect:)
     # This is to prevent us from looping because we're about to define some
     # methods.
     @_defining_method = true
 
-    with_aspect_method_name = method_symbol.to_s + "_with_#{position}_" + aspect.to_s
-    without_aspect_method_name = method_symbol.to_s + "_without_#{position}_" + aspect.to_s
+    with_aspect_method_name = "#{method_name}_with_#{position}_#{aspect}"
+    without_aspect_method_name = "#{method_name}_without_#{position}_#{aspect}"
 
     case position
     when BEFORE_ASPECT
@@ -57,9 +57,9 @@ module Aspectual
 
     define_method(with_aspect_method_name, aspect_proc)
 
-    scope_method_to_parent(method_symbol, with_aspect_method_name)
+    scope_method_to_parent(method_name, with_aspect_method_name)
 
-    alias_method_chain(method_symbol, aspect.to_sym, position)
+    alias_method_chain(target: method_name, feature: aspect, position:)
 
     @_defining_method = false
   end
@@ -75,8 +75,8 @@ module Aspectual
     end
   end
 
-  # adapted from active support
-  def alias_method_chain(target, feature, position)
+  # adapted from ActiveSupport
+  def alias_method_chain(target:, feature:, position:)
     # Strip out punctuation on predicates or bang methods since
     # e.g. target?_without_position_feature is not a valid method name.
     aliased_target, punctuation = target.to_s.sub(/([?!=])$/, ''), $1
