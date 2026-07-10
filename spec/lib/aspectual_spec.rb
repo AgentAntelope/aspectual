@@ -19,7 +19,6 @@ describe Aspectual do
       self
     end
 
-    # TODO: Add test methods demonstrating block parameter forwarding
     # TODO: Add test methods demonstrating all parameter forwarding
 
     def array_test_method_0
@@ -216,6 +215,36 @@ describe Aspectual do
     aspects after: :kwarg_aspect_method
     def after_kwarg_test_method(**kwargs)
       methods_called << "after_kwarg_test_method_kwargs_#{kwargs.to_a.join('_')}"
+      self
+    end
+
+    def block_aspect_method(&block)
+      methods_called << "block_aspect_method_block_result_#{block.call}"
+      self
+    end
+
+    def block_around_aspect_method(&block)
+      methods_called << "before_block_block_around_aspect_method_block"
+      block.call
+      methods_called << "after_block_block_around_aspect_method_block"
+      self
+    end
+
+    aspects before: :block_aspect_method
+    def before_block_test_method(&block)
+      methods_called << "before_block_test_method_block_result_#{block.call}"
+      self
+    end
+
+    aspects around: :block_around_aspect_method
+    def around_block_test_method(&block)
+      methods_called << "around_block_test_method_block_result_#{block.call}"
+      self
+    end
+
+    aspects after: :block_aspect_method
+    def after_block_test_method(&block)
+      methods_called << "after_block_test_method_block_result_#{block.call}"
       self
     end
 
@@ -418,6 +447,33 @@ describe Aspectual do
         expect(test_instance.methods_called).to eq(%w{
           after_kwarg_test_method_kwargs_kwarg_1_val_1_kwarg_2_val_2
           kwarg_aspect_method_kwargs_kwarg_1_val_1_kwarg_2_val_2
+        })
+    end
+  end
+
+  describe "methods with block arguments" do
+    it 'can handle before aspects' do
+      test_instance = TestClass.new.before_block_test_method { "called" }
+        expect(test_instance.methods_called).to eq(%w{
+          block_aspect_method_block_result_called
+          before_block_test_method_block_result_called
+        })
+    end
+
+    it 'can handle around aspects' do
+      test_instance = TestClass.new.around_block_test_method { "called" }
+        expect(test_instance.methods_called).to eq(%w{
+          before_block_block_around_aspect_method_block
+          around_block_test_method_block_result_called
+          after_block_block_around_aspect_method_block
+        })
+    end
+
+    it 'can handle after aspects' do
+      test_instance = TestClass.new.after_block_test_method { "called" }
+        expect(test_instance.methods_called).to eq(%w{
+          after_block_test_method_block_result_called
+          block_aspect_method_block_result_called
         })
     end
   end
