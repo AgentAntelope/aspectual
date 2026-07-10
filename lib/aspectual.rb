@@ -1,13 +1,19 @@
 #!/usr/bin/env ruby
 
 module Aspectual
+  VALID_ASPECTS = [
+    BEFORE_ASPECT = :before,
+    AFTER_ASPECT  = :after,
+    AROUND_ASPECT = :around,
+  ].freeze
+
   def aspects(aspects)
-    # The before aspect have to be reversed so that when multiple before
-    # aspects are added to one method, the first declared method will be
-    # added last.
-    @_before_aspects = Array(aspects[:before]).reverse
-    @_around_aspects = Array(aspects[:around]).reverse
-    @_after_aspects  = Array(aspects[:after])
+    # The before and around aspects have to be reversed so that when multiple
+    # aspects are added to one method, the first declared method will be added
+    # last.
+    @_before_aspects = Array(aspects[BEFORE_ASPECT]).reverse
+    @_around_aspects = Array(aspects[AROUND_ASPECT]).reverse
+    @_after_aspects  = Array(aspects[AFTER_ASPECT])
   end
 
   def method_added(method_symbol)
@@ -15,7 +21,7 @@ module Aspectual
     return if @_defining_method
     if method_defined?(method_symbol)
 
-      %w{before around after}.each do |position|
+      VALID_ASPECTS.each do |position|
         current_aspects = instance_variable_get("@_#{position}_aspects")
         if current_aspects
           current_aspects.each do |aspect|
@@ -33,18 +39,19 @@ module Aspectual
   end
 
   def define_aspect_method(method_symbol, position, aspect)
-    # This is to prevent us from looping because we're about to define some methods.
+    # This is to prevent us from looping because we're about to define some
+    # methods.
     @_defining_method = true
 
     with_aspect_method_name = method_symbol.to_s + "_with_#{position}_" + aspect.to_s
     without_aspect_method_name = method_symbol.to_s + "_without_#{position}_" + aspect.to_s
 
     case position
-    when "before"
+    when BEFORE_ASPECT
       aspect_proc = lambda {|*args| send(aspect, *args); send(without_aspect_method_name, *args)}
-    when "around"
+    when AROUND_ASPECT
       aspect_proc = lambda {|*args| send(aspect, *args, &Proc.new{send(without_aspect_method_name, *args)})}
-    when "after"
+    when AFTER_ASPECT
       aspect_proc = lambda {|*args| send(without_aspect_method_name, *args); send(aspect, *args)}
     end
 
