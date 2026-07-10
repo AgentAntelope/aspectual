@@ -6,7 +6,7 @@ require 'aspectual/version'
 Gem::Specification.new do |spec|
   spec.name          = "aspectual"
   spec.version       = Aspectual::VERSION
-  spec.authors       = ["Alex Sunderland"]
+  spec.authors       = ["Fell Sunderland"]
   spec.email         = ["agentantelope+aspectual@gmail.com"]
   spec.description   = %q{
     A simple gem to support minimal Aspect Oriented Programming in ruby.
