@@ -7,36 +7,40 @@ module Aspectual
     AROUND_ASPECT = :around,
   ].freeze
 
-  def aspects(aspects)
+  def aspects(before: [], around: [], after: [])
     # The before and around aspects have to be reversed so that when multiple
     # aspects are added to one method, the first declared method will be added
     # last.
-    @_before_aspects = Array(aspects[BEFORE_ASPECT]).reverse
-    @_around_aspects = Array(aspects[AROUND_ASPECT]).reverse
-    @_after_aspects  = Array(aspects[AFTER_ASPECT])
+    @_aspects = {
+      BEFORE_ASPECT => Array(before).reverse,
+      AROUND_ASPECT => Array(around).reverse,
+      AFTER_ASPECT  => Array(after),
+    }
   end
 
   def method_added(method_name)
-    return unless has_aspects_declared?
+    # If there are no defined aspects we have nothing to do
+    return unless @_aspects&.any? {|aspect, methods| methods.any? }
     return if @_defining_method
+
     if method_defined?(method_name)
 
       VALID_ASPECTS.each do |position|
-        current_aspects = instance_variable_get("@_#{position}_aspects")
-        if current_aspects
-          current_aspects.each do |aspect|
-            define_aspect_method(method_name:, position:, aspect:)
-          end
+        @_aspects[position]&.map do |aspect|
+          define_aspect_method(method_name:, position:, aspect:)
         end
+
+        # Once a method is defined, we need to clear the aspects out to avoid
+        # polluting subsequent method definitions. If you're defining multiple
+        # methods in a loop that will mean you'll need to call .aspects multiple
+        # times, but if you're doing that sort of thing then I assume you're
+        # comfortable with a little discomfort.
+        @_aspects[position] = []
       end
     end
   end
 
   private
-
-  def has_aspects_declared?
-    @_before_aspects || @_after_aspects
-  end
 
   def define_aspect_method(method_name:, position:, aspect:)
     # This is to prevent us from looping because we're about to define some
@@ -110,22 +114,23 @@ module Aspectual
   def with_aspect_method_name(target:, position:, feature:, punctuation: nil)
     target, punctuation = *safe_target(target:)
 
-    # produces something like: :foo_with_before_logging?
+    # Produce something like: :target_with_position_feature (with possible
+    # punctuation on the end)
     :"#{target}_with_#{position}_#{feature}#{punctuation}"
   end
 
   def without_aspect_method_name(target:, position:, feature:, punctuation: nil)
     target, punctuation = *safe_target(target:)
 
-    # produces something like: :foo_without_before_logging?
+    # Produce something like: :target_without_position_feature (with possible
+    # punctuation on the end)
     :"#{target}_without_#{position}_#{feature}#{punctuation}"
   end
 
   def safe_target(target:)
-    # Strip out punctuation on methods ending in one of !, ?, or = since e.g.
-    # target?_without_position_feature is not a valid method name. Since we only
-    # call this method with the name of a method that has been added, there's no
-    # need to validate further that the rest of the method name is valid.
+    # Extract punctuation on methods ending in one of !, ?, or = since e.g.
+    # target?_without_position_feature should properly be
+    # target_without_position_feature?.
     target.to_s.scan(/(.*)([?!=])?$/).flatten
   end
 end
