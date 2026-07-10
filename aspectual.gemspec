@@ -20,6 +20,9 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
+  # TODO: Work out what the actual minimal required ruby is
+  # spec.required_ruby_version = 'TBD'
+
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "rspec"
 end
