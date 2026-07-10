@@ -98,23 +98,8 @@ module Aspectual
 
   # adapted from ActiveSupport
   def alias_method_chain(target:, feature:, position:)
-    # Strip out punctuation on predicates or bang methods since
-    # e.g. target?_without_position_feature is not a valid method name.
-    aliased_target, punctuation = target.to_s.sub(/([?!=])$/, ''), $1
-
-    with_method_name = with_aspect_method_name(
-      target:,
-      position:,
-      feature:,
-      punctuation:,
-    )
-
-    without_method_name = without_aspect_method_name(
-      target: aliased_target,
-      position:,
-      feature:,
-      punctuation:,
-    )
+    with_method_name = with_aspect_method_name(target:, position:, feature:)
+    without_method_name = without_aspect_method_name(target:, position:, feature:)
 
     alias_method(without_method_name, target)
     alias_method(target, with_method_name)
@@ -123,12 +108,24 @@ module Aspectual
   end
 
   def with_aspect_method_name(target:, position:, feature:, punctuation: nil)
+    target, punctuation = *safe_target(target:)
+
     # produces something like: :foo_with_before_logging?
     :"#{target}_with_#{position}_#{feature}#{punctuation}"
   end
 
   def without_aspect_method_name(target:, position:, feature:, punctuation: nil)
+    target, punctuation = *safe_target(target:)
+
     # produces something like: :foo_without_before_logging?
     :"#{target}_without_#{position}_#{feature}#{punctuation}"
+  end
+
+  def safe_target(target:)
+    # Strip out punctuation on methods ending in one of !, ?, or = since e.g.
+    # target?_without_position_feature is not a valid method name. Since we only
+    # call this method with the name of a method that has been added, there's no
+    # need to validate further that the rest of the method name is valid.
+    target.to_s.scan(/(.*)([?!=])?$/).flatten
   end
 end

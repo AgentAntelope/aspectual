@@ -20,6 +20,7 @@ describe Aspectual do
     end
 
     # TODO: Add test methods demonstrating parameter forwarding
+    # TODO: Add test demonstrating functionality for methods ending in =!?
 
     def array_test_method_0
       methods_called << "array_test_method_0"
