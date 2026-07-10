@@ -19,7 +19,9 @@ describe Aspectual do
       self
     end
 
-    # TODO: Add test methods demonstrating parameter forwarding
+    # TODO: Add test methods demonstrating keyword parameter forwarding
+    # TODO: Add test methods demonstrating block parameter forwarding
+    # TODO: Add test methods demonstrating all parameter forwarding
 
     def array_test_method_0
       methods_called << "array_test_method_0"
@@ -155,6 +157,36 @@ describe Aspectual do
     aspects before: :assign_aspect_method=
     def assign_test_method=
       methods_called << "assign_test_method="
+      self
+    end
+
+    def positional_aspect_method(*args)
+      methods_called << "positional_aspect_method_args_#{args.join('_')}"
+      self
+    end
+
+    def positional_around_aspect_method(*args)
+      methods_called << "before_block_positional_around_aspect_method_args_#{args.join('_')}"
+      yield
+      methods_called << "after_block_positional_around_aspect_method_args_#{args.join('_')}"
+      self
+    end
+
+    aspects before: :positional_aspect_method
+    def before_positional_test_method(*args)
+      methods_called << "before_positional_test_method_args_#{args.join('_')}"
+      self
+    end
+
+    aspects around: :positional_around_aspect_method
+    def around_positional_test_method(*args)
+      methods_called << "before_positional_test_method_args_#{args.join('_')}"
+      self
+    end
+
+    aspects after: :positional_aspect_method
+    def after_positional_test_method(*args)
+      methods_called << "after_positional_test_method_args_#{args.join('_')}"
       self
     end
 
@@ -304,6 +336,33 @@ describe Aspectual do
           assign_test_method=
         })
       end
+    end
+  end
+
+  describe "methods with positional arguments" do
+    it 'can handle before aspects' do
+      test_instance = TestClass.new.before_positional_test_method("arg_1", "arg_2")
+        expect(test_instance.methods_called).to eq(%w{
+          positional_aspect_method_args_arg_1_arg_2
+          before_positional_test_method_args_arg_1_arg_2
+        })
+    end
+
+    it 'can handle around aspects' do
+      test_instance = TestClass.new.around_positional_test_method("arg_1", "arg_2")
+        expect(test_instance.methods_called).to eq(%w{
+          before_block_positional_around_aspect_method_args_arg_1_arg_2
+          before_positional_test_method_args_arg_1_arg_2
+          after_block_positional_around_aspect_method_args_arg_1_arg_2
+        })
+    end
+
+    it 'can handle after aspects' do
+      test_instance = TestClass.new.after_positional_test_method("arg_1", "arg_2")
+        expect(test_instance.methods_called).to eq(%w{
+          after_positional_test_method_args_arg_1_arg_2
+          positional_aspect_method_args_arg_1_arg_2
+        })
     end
   end
 
