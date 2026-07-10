@@ -55,7 +55,10 @@ module Aspectual
 
     define_method(with_method_name, with_method_proc)
 
-    scope_method_to_parent(method_name, with_method_name)
+    scope_method_to_parent(
+      scope_method_name: method_name,
+      new_method_name: with_method_name
+    )
 
     alias_method_chain(target: method_name, feature: aspect, position:)
 
@@ -93,14 +96,14 @@ module Aspectual
     end
   end
 
-  def scope_method_to_parent(without_method, target)
+  def scope_method_to_parent(scope_method_name:, new_method_name:)
     case
-    when public_method_defined?(without_method)
-      public target
-    when protected_method_defined?(without_method)
-      protected target
-    when private_method_defined?(without_method)
-      private target
+    when public_method_defined?(scope_method_name)
+      public new_method_name
+    when protected_method_defined?(scope_method_name)
+      protected new_method_name
+    when private_method_defined?(scope_method_name)
+      private new_method_name
     end
   end
 
@@ -112,7 +115,10 @@ module Aspectual
     alias_method(without_method_name, target)
     alias_method(target, with_method_name)
 
-    scope_method_to_parent(without_method_name, target)
+    scope_method_to_parent(
+      scope_method_name: without_method_name,
+      new_method_name: target,
+    )
   end
 
   def with_aspect_method_name(target:, position:, feature:, punctuation: nil)
