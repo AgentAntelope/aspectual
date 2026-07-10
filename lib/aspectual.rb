@@ -43,21 +43,26 @@ module Aspectual
     # methods.
     @_defining_method = true
 
-    with_aspect_method_name = "#{method_name}_with_#{position}_#{aspect}"
-    without_aspect_method_name = "#{method_name}_without_#{position}_#{aspect}"
+    with_method_name = with_aspect_method_name(
+      target: method_name, position:, feature: aspect,
+    )
+
+    without_method_name = without_aspect_method_name(
+      target: method_name, position:, feature: aspect,
+    )
 
     case position
     when BEFORE_ASPECT
-      aspect_proc = lambda {|*args| send(aspect, *args); send(without_aspect_method_name, *args)}
+      aspect_proc = lambda {|*args| send(aspect, *args); send(without_method_name, *args)}
     when AROUND_ASPECT
-      aspect_proc = lambda {|*args| send(aspect, *args, &Proc.new{send(without_aspect_method_name, *args)})}
+      aspect_proc = lambda {|*args| send(aspect, *args, &Proc.new{send(without_method_name, *args)})}
     when AFTER_ASPECT
-      aspect_proc = lambda {|*args| send(without_aspect_method_name, *args); send(aspect, *args)}
+      aspect_proc = lambda {|*args| send(without_method_name, *args); send(aspect, *args)}
     end
 
-    define_method(with_aspect_method_name, aspect_proc)
+    define_method(with_method_name, aspect_proc)
 
-    scope_method_to_parent(method_name, with_aspect_method_name)
+    scope_method_to_parent(method_name, with_method_name)
 
     alias_method_chain(target: method_name, feature: aspect, position:)
 
@@ -81,12 +86,33 @@ module Aspectual
     # e.g. target?_without_position_feature is not a valid method name.
     aliased_target, punctuation = target.to_s.sub(/([?!=])$/, ''), $1
 
-    with_method = "#{aliased_target}_with_#{position}_#{feature}#{punctuation}"
-    without_method = "#{aliased_target}_without_#{position}_#{feature}#{punctuation}"
+    with_method_name = with_aspect_method_name(
+      target:,
+      position:,
+      feature:,
+      punctuation:,
+    )
 
-    alias_method without_method, target
-    alias_method target, with_method
+    without_method_name = without_aspect_method_name(
+      target: aliased_target,
+      position:,
+      feature:,
+      punctuation:,
+    )
 
-    scope_method_to_parent(without_method, target)
+    alias_method(without_method_name, target)
+    alias_method(target, with_method_name)
+
+    scope_method_to_parent(without_method_name, target)
+  end
+
+  def with_aspect_method_name(target:, position:, feature:, punctuation: nil)
+    # produces something like: :foo_with_before_logging?
+    :"#{target}_with_#{position}_#{feature}#{punctuation}"
+  end
+
+  def without_aspect_method_name(target:, position:, feature:, punctuation: nil)
+    # produces something like: :foo_without_before_logging?
+    :"#{target}_without_#{position}_#{feature}#{punctuation}"
   end
 end
