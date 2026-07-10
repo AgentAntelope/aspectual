@@ -70,8 +70,10 @@ module Aspectual
     case position
     when BEFORE_ASPECT
       lambda do |*args, **kwargs, &blk|
+        # first, call the aspect
         send(aspect, *args, **kwargs, &blk)
 
+        # then, call the method without the aspect
         send(without_method_name, *args, **kwargs, &blk)
       end
     when AROUND_ASPECT
@@ -82,8 +84,10 @@ module Aspectual
       end
     when AFTER_ASPECT
       lambda do |*args, **kwargs, &blk|
+        # first, call the method without the aspect
         send(without_method_name, *args, **kwargs, &blk)
 
+        # then, call the aspect
         send(aspect, *args, **kwargs, &blk)
       end
     end
