@@ -47,26 +47,42 @@ module Aspectual
       target: method_name, position:, feature: aspect,
     )
 
-    without_method_name = without_aspect_method_name(
-      target: method_name, position:, feature: aspect,
-    )
+    with_method_proc = build_with_method_proc(aspect:, position:, method_name:)
 
-    case position
-    when BEFORE_ASPECT
-      aspect_proc = lambda {|*args| send(aspect, *args); send(without_method_name, *args)}
-    when AROUND_ASPECT
-      aspect_proc = lambda {|*args| send(aspect, *args, &Proc.new{send(without_method_name, *args)})}
-    when AFTER_ASPECT
-      aspect_proc = lambda {|*args| send(without_method_name, *args); send(aspect, *args)}
-    end
-
-    define_method(with_method_name, aspect_proc)
+    define_method(with_method_name, with_method_proc)
 
     scope_method_to_parent(method_name, with_method_name)
 
     alias_method_chain(target: method_name, feature: aspect, position:)
 
     @_defining_method = false
+  end
+
+  def build_with_method_proc(aspect:, position:, method_name:)
+    without_method_name = without_aspect_method_name(
+      target: method_name, position:, feature: aspect,
+    )
+
+    case position
+    when BEFORE_ASPECT
+      lambda do |*args, **kwargs, &blk|
+        send(aspect, *args, **kwargs, &blk)
+
+        send(without_method_name, *args, **kwargs, &blk)
+      end
+    when AROUND_ASPECT
+      lambda do |*args, **kwargs, &blk|
+        send(aspect, *args, **kwargs, &Proc.new do
+          send(without_method_name, *args, **kwargs, &blk)
+        end)
+      end
+    when AFTER_ASPECT
+      lambda do |*args, **kwargs, &blk|
+        send(without_method_name, *args, **kwargs, &blk)
+
+        send(aspect, *args, **kwargs, &blk)
+      end
+    end
   end
 
   def scope_method_to_parent(without_method, target)

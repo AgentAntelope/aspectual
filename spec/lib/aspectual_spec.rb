@@ -19,6 +19,8 @@ describe Aspectual do
       self
     end
 
+    # TODO: Add test methods demonstrating parameter forwarding
+
     def array_test_method_0
       methods_called << "array_test_method_0"
       self
