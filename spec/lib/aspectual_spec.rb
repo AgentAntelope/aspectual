@@ -197,36 +197,6 @@ describe Aspectual do
       self
     end
 
-    def block_aspect_method(&block)
-      methods_called << "block_aspect_method_block_result_#{block.call}"
-      self
-    end
-
-    def block_around_aspect_method(&block)
-      methods_called << "before_block_block_around_aspect_method_block"
-      block.call
-      methods_called << "after_block_block_around_aspect_method_block"
-      self
-    end
-
-    aspects before: :block_aspect_method
-    def before_block_test_method(&block)
-      methods_called << "before_block_test_method_block_result_#{block.call}"
-      self
-    end
-
-    aspects around: :block_around_aspect_method
-    def around_block_test_method(&block)
-      methods_called << "around_block_test_method_block_result_#{block.call}"
-      self
-    end
-
-    aspects after: :block_aspect_method
-    def after_block_test_method(&block)
-      methods_called << "after_block_test_method_block_result_#{block.call}"
-      self
-    end
-
     def all_params_aspect_method(arg_1, *args, kwarg_1:, **kwargs, &block)
       methods_called << "all_params_aspect_method_block_arg1_#{
         arg_1}_args_#{args.join("_")}_kwarg_1_#{kwarg_1}_#{
