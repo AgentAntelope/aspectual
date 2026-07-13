@@ -6,7 +6,7 @@ require 'aspectual/version'
 Gem::Specification.new do |spec|
   spec.name          = "aspectual"
   spec.version       = Aspectual::VERSION
-  spec.authors       = ["Alex Sunderland"]
+  spec.authors       = ["Fell Sunderland"]
   spec.email         = ["agentantelope+aspectual@gmail.com"]
   spec.description   = %q{
     A simple gem to support minimal Aspect Oriented Programming in ruby.
@@ -19,6 +19,9 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
+
+  # TODO: Work out what the actual minimal required ruby is
+  # spec.required_ruby_version = 'TBD'
 
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "rspec"
