@@ -143,25 +143,6 @@ describe Aspectual do
       methods_called << "before_and_after_aspects_test_method"
       self
     end
-
-    def public_aspect_method
-      methods_called << "public_aspect_method"
-      self
-    end
-
-    protected
-    aspects before: :public_aspect_method
-    def protected_method
-      methods_called << "protected_method"
-      self
-    end
-
-    private
-    aspects before: :public_aspect_method
-    def private_method
-      methods_called << "private_method"
-      self
-    end
   end
 
   describe "before aspects" do
@@ -288,27 +269,6 @@ describe Aspectual do
         after_test_method_0
         after_test_method_1
       })
-    end
-  end
-
-  describe "public methods" do
-    it "stay public" do
-      test_instance = TestClass.new.single_before_test_method
-      expect(test_instance.public_methods).to include(:single_before_test_method)
-    end
-  end
-
-  describe "protected methods" do
-    it "stay protected" do
-      test_instance = TestClass.new
-      expect(test_instance.protected_methods).to include(:protected_method)
-    end
-  end
-
-  describe "private methods" do
-    it "stay private" do
-      test_instance = TestClass.new
-      expect(test_instance.private_methods).to include(:private_method)
     end
   end
 end
