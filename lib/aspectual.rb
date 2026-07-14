@@ -7,26 +7,66 @@ module Aspectual
     AROUND_ASPECT = :around,
   ].freeze
 
-  def aspects(before: [], around: [], after: [])
-    # The before and around aspects have to be reversed so that when multiple
-    # aspects are added to one method, the first declared method will be added
-    # last.
-    @_aspects = {
-      BEFORE_ASPECT => Array(before).reverse,
-      AROUND_ASPECT => Array(around).reverse,
-      AFTER_ASPECT  => Array(after),
-    }
+  BLANK_ASPECT = {
+    BEFORE_ASPECT => [].freeze,
+    AROUND_ASPECT => [].freeze,
+    AFTER_ASPECT  => [].freeze,
+  }.freeze
+
+  NEXT_METHOD_ADDED_KEY = :_next_method_added
+
+  def aspects(*method_names, before: [], around: [], after: [])
+    method_names = [NEXT_METHOD_ADDED_KEY] if method_names.empty?
+    method_names.each do |method_name|
+      merge_aspects(
+        method_name:,
+        new_aspects: {
+          BEFORE_ASPECT => Array(before),
+          AROUND_ASPECT => Array(around),
+          AFTER_ASPECT  => Array(after),
+        },
+      )
+
+      # If we already defined the method we're adding aspects for, we need to
+      # process that straight away.
+      add_aspects_to_method(method_name:) if instance_methods.include?(method_name)
+    end
   end
 
   def method_added(method_name)
+    add_aspects_to_method(method_name:)
+
+    super
+  end
+
+  private
+
+  def add_aspects_to_method(method_name:)
+    # Special default value for next method added
+    @@_aspects ||= {NEXT_METHOD_ADDED_KEY => BLANK_ASPECT}
+
+    merge_aspects(
+      method_name:,
+      new_aspects: @@_aspects.fetch(NEXT_METHOD_ADDED_KEY, BLANK_ASPECT)
+    )
+
+    aspects_to_add = @@_aspects[method_name]
+
+    # Blank out the aspects for the next method added
+    @@_aspects[NEXT_METHOD_ADDED_KEY] = BLANK_ASPECT
+
+    # Blank out the aspects for this method, in case we see multiple definitions
+    # of a single method (i.e. inheritance)
+    @@_aspects[method_name] = BLANK_ASPECT
+
     # If there are no defined aspects we have nothing to do
-    return unless @_aspects&.any? {|aspect, methods| methods.any? }
+    return unless aspects_to_add&.any? {|aspect, methods| methods.any? }
     return if @_defining_method
 
     if method_defined?(method_name)
 
       VALID_ASPECTS.each do |position|
-        @_aspects[position]&.map do |aspect|
+        aspects_to_add[position].map do |aspect|
           define_aspect_method(method_name:, position:, aspect:)
         end
 
@@ -35,12 +75,10 @@ module Aspectual
         # methods in a loop that will mean you'll need to call .aspects multiple
         # times, but if you're doing that sort of thing then I assume you're
         # comfortable with a little discomfort.
-        @_aspects[position] = []
+        @@_aspects[position] = []
       end
     end
   end
-
-  private
 
   def define_aspect_method(method_name:, position:, aspect:)
     # This is to prevent us from looping because we're about to define some
@@ -142,5 +180,24 @@ module Aspectual
     # target?_without_position_feature should properly be
     # target_without_position_feature?.
     target.to_s.scan(/(.*)([?!=])?$/).flatten
+  end
+
+  def merge_aspects(method_name:, new_aspects:)
+    # Special default value for next method added
+    @@_aspects ||= {NEXT_METHOD_ADDED_KEY => BLANK_ASPECT}
+
+    @@_aspects.merge!({method_name => new_aspects}) do |aspected_method_name, old_config, new_config|
+      old_config.merge(new_config) do |aspect, old_aspects, new_aspects|
+        case aspect
+        when BEFORE_ASPECT, AROUND_ASPECT
+          # The before and around aspects have to be reversed so that when
+          # multiple aspects are added to one method, the first declared method
+          # will be added last.
+          (new_aspects.reverse + old_aspects).uniq
+        else
+          (old_aspects + new_aspects).uniq
+        end
+      end
+    end
   end
 end
