@@ -42,19 +42,22 @@ module Aspectual
   private
 
   def add_aspects_to_method(method_name:)
+    # Special default value for next method added
+    @@_aspects ||= {NEXT_METHOD_ADDED_KEY => BLANK_ASPECT}
+
     merge_aspects(
       method_name:,
-      new_aspects: @_aspects&.fetch(NEXT_METHOD_ADDED_KEY, BLANK_ASPECT)
+      new_aspects: @@_aspects.fetch(NEXT_METHOD_ADDED_KEY, BLANK_ASPECT)
     )
 
-    aspects_to_add = @_aspects[method_name]
+    aspects_to_add = @@_aspects[method_name]
 
     # Blank out the aspects for the next method added
-    @_aspects[NEXT_METHOD_ADDED_KEY] = BLANK_ASPECT
+    @@_aspects[NEXT_METHOD_ADDED_KEY] = BLANK_ASPECT
 
     # Blank out the aspects for this method, in case we see multiple definitions
     # of a single method (i.e. inheritance)
-    @_aspects[method_name] = BLANK_ASPECT
+    @@_aspects[method_name] = BLANK_ASPECT
 
     # If there are no defined aspects we have nothing to do
     return unless aspects_to_add&.any? {|aspect, methods| methods.any? }
@@ -72,7 +75,7 @@ module Aspectual
         # methods in a loop that will mean you'll need to call .aspects multiple
         # times, but if you're doing that sort of thing then I assume you're
         # comfortable with a little discomfort.
-        @_aspects[position] = []
+        @@_aspects[position] = []
       end
     end
   end
@@ -181,9 +184,9 @@ module Aspectual
 
   def merge_aspects(method_name:, new_aspects:)
     # Special default value for next method added
-    @_aspects ||= {NEXT_METHOD_ADDED_KEY => BLANK_ASPECT}
+    @@_aspects ||= {NEXT_METHOD_ADDED_KEY => BLANK_ASPECT}
 
-    @_aspects.merge!({method_name => new_aspects}) do |aspected_method_name, old_config, new_config|
+    @@_aspects.merge!({method_name => new_aspects}) do |aspected_method_name, old_config, new_config|
       old_config.merge(new_config) do |aspect, old_aspects, new_aspects|
         case aspect
         when BEFORE_ASPECT, AROUND_ASPECT
