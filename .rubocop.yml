@@ -1,3 +1,13 @@
+Metrics/ModuleLength:
+  CountAsOne:
+    - array
+    - hash
+    - method_call
+Metrics/MethodLength:
+  CountAsOne:
+    - array
+    - hash
+    - method_call
 TrailingCommaInArrayLiteral:
   EnforcedStyleForMultiline: consistent_comma
 TrailingCommaInArguments:

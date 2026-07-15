@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+
+require 'English'
 lib = File.expand_path('lib', __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'aspectual/version'
@@ -14,7 +17,7 @@ Gem::Specification.new do |spec|
   spec.homepage      = 'https://github.com/AgentAntelope/aspectual'
   spec.license       = 'MIT'
 
-  spec.files         = `git ls-files`.split($/).reject { |f| f.end_with?('gem') }
+  spec.files         = `git ls-files`.split($INPUT_RECORD_SEPARATOR).reject { |f| f.end_with?('gem') }
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']
