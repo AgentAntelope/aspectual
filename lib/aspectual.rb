@@ -52,30 +52,22 @@ module Aspectual
 
     aspects_to_add = @@_aspects[method_name]
 
-    # Blank out the aspects for the next method added
-    @@_aspects[NEXT_METHOD_ADDED_KEY] = BLANK_ASPECT
-
-    # Blank out the aspects for this method, in case we see multiple definitions
-    # of a single method (i.e. inheritance)
-    @@_aspects[method_name] = BLANK_ASPECT
-
     # If there are no defined aspects we have nothing to do
     return unless aspects_to_add&.any? {|aspect, methods| methods.any? }
     return if @_defining_method
 
+    # Blank out the aspects for the next method added
+    @@_aspects[NEXT_METHOD_ADDED_KEY] = BLANK_ASPECT
+
     if method_defined?(method_name)
+      # Blank out the aspects for this method, in case we see multiple definitions
+      # of a single method (i.e. inheritance)
+      @@_aspects[method_name] = BLANK_ASPECT
 
       VALID_ASPECTS.each do |position|
         aspects_to_add[position].map do |aspect|
           define_aspect_method(method_name:, position:, aspect:)
         end
-
-        # Once a method is defined, we need to clear the aspects out to avoid
-        # polluting subsequent method definitions. If you're defining multiple
-        # methods in a loop that will mean you'll need to call .aspects multiple
-        # times, but if you're doing that sort of thing then I assume you're
-        # comfortable with a little discomfort.
-        @@_aspects[position] = []
       end
     end
   end
@@ -185,6 +177,8 @@ module Aspectual
   def merge_aspects(method_name:, new_aspects:)
     # Special default value for next method added
     @@_aspects ||= {NEXT_METHOD_ADDED_KEY => BLANK_ASPECT}
+
+    return @@_aspects if new_aspects == BLANK_ASPECT
 
     @@_aspects.merge!({method_name => new_aspects}) do |aspected_method_name, old_config, new_config|
       old_config.merge(new_config) do |aspect, old_aspects, new_aspects|
