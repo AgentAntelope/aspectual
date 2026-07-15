@@ -44,7 +44,7 @@ module Aspectual
   end
 
   def defined_aspects
-    return @_aspects if defined?(@_aspects)
+    return @defined_aspects if defined?(@defined_aspects)
 
     aspected_ancestor = ancestors[1..].detect do |klass|
       klass.is_a?(Aspectual)
@@ -52,10 +52,12 @@ module Aspectual
 
     return @_aspects ||= DEFAULT_ASPECTS unless aspected_ancestor
 
-    @_aspects = aspected_ancestor.defined_aspects.dup
+    @defined_aspects = aspected_ancestor.defined_aspects.dup
   end
 
   private
+
+  attr_writer :defined_aspects
 
   def add_aspects_to_method(method_name:)
     merge_aspects(
@@ -163,7 +165,7 @@ module Aspectual
     )
   end
 
-  def with_aspect_method_name(target:, position:, feature:, punctuation: nil)
+  def with_aspect_method_name(target:, position:, feature:)
     target, punctuation = *safe_target(target:)
 
     # Produce something like: :target_with_position_feature (with possible
@@ -171,7 +173,7 @@ module Aspectual
     :"#{target}_with_#{position}_#{feature}#{punctuation}"
   end
 
-  def without_aspect_method_name(target:, position:, feature:, punctuation: nil)
+  def without_aspect_method_name(target:, position:, feature:)
     target, punctuation = *safe_target(target:)
 
     # Produce something like: :target_without_position_feature (with possible
@@ -189,7 +191,9 @@ module Aspectual
   def merge_aspects(method_name:, new_aspects:)
     return defined_aspects if new_aspects == BLANK_ASPECT
 
-    @_aspects = defined_aspects.merge({ method_name => new_aspects }) do |_aspected_method_name, old_config, new_config|
+    self.defined_aspects = defined_aspects.merge(
+      { method_name => new_aspects },
+    ) do |_aspected_method_name, old_config, new_config|
       old_config.merge(new_config) do |aspect, old_aspects, new_aspects|
         case aspect
         when BEFORE_ASPECT, AROUND_ASPECT
