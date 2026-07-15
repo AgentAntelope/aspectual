@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 module Aspectual
   VALID_ASPECTS = [
@@ -10,10 +11,13 @@ module Aspectual
   BLANK_ASPECT = {
     BEFORE_ASPECT => [].freeze,
     AROUND_ASPECT => [].freeze,
-    AFTER_ASPECT  => [].freeze,
+    AFTER_ASPECT => [].freeze,
   }.freeze
 
   NEXT_METHOD_ADDED_KEY = :_next_method_added
+
+  # Special default value for next method added
+  DEFAULT_ASPECTS = { NEXT_METHOD_ADDED_KEY => BLANK_ASPECT }.freeze
 
   def aspects(*method_names, before: [], around: [], after: [])
     method_names = [NEXT_METHOD_ADDED_KEY] if method_names.empty?
@@ -23,7 +27,7 @@ module Aspectual
         new_aspects: {
           BEFORE_ASPECT => Array(before),
           AROUND_ASPECT => Array(around),
-          AFTER_ASPECT  => Array(after),
+          AFTER_ASPECT => Array(after),
         },
       )
 
@@ -39,35 +43,44 @@ module Aspectual
     super
   end
 
+  def defined_aspects
+    return @_aspects if defined?(@_aspects)
+
+    aspected_ancestor = ancestors[1..].detect do |klass|
+      klass.is_a?(Aspectual)
+    end
+
+    return @_aspects ||= DEFAULT_ASPECTS unless aspected_ancestor
+
+    @_aspects = aspected_ancestor.defined_aspects.dup
+  end
+
   private
 
   def add_aspects_to_method(method_name:)
-    # Special default value for next method added
-    @@_aspects ||= {NEXT_METHOD_ADDED_KEY => BLANK_ASPECT}
-
     merge_aspects(
       method_name:,
-      new_aspects: @@_aspects.fetch(NEXT_METHOD_ADDED_KEY, BLANK_ASPECT)
+      new_aspects: defined_aspects.fetch(NEXT_METHOD_ADDED_KEY, BLANK_ASPECT),
     )
 
-    aspects_to_add = @@_aspects[method_name]
+    aspects_to_add = defined_aspects[method_name]
 
     # If there are no defined aspects we have nothing to do
-    return unless aspects_to_add&.any? {|aspect, methods| methods.any? }
+    return unless aspects_to_add&.any? { |_aspect, methods| methods.any? }
     return if @_defining_method
 
     # Blank out the aspects for the next method added
-    @@_aspects[NEXT_METHOD_ADDED_KEY] = BLANK_ASPECT
+    defined_aspects[NEXT_METHOD_ADDED_KEY] = BLANK_ASPECT
 
-    if method_defined?(method_name)
-      # Blank out the aspects for this method, in case we see multiple definitions
-      # of a single method (i.e. inheritance)
-      @@_aspects[method_name] = BLANK_ASPECT
+    return unless method_defined?(method_name)
 
-      VALID_ASPECTS.each do |position|
-        aspects_to_add[position].map do |aspect|
-          define_aspect_method(method_name:, position:, aspect:)
-        end
+    # Remove the aspects for this method, in case we see multiple definitions
+    # of a single method (i.e. inheritance)
+    defined_aspects.delete(method_name)
+
+    VALID_ASPECTS.each do |position|
+      aspects_to_add[position].map do |aspect|
+        define_aspect_method(method_name:, position:, aspect:)
       end
     end
   end
@@ -87,7 +100,7 @@ module Aspectual
 
     scope_method_to_parent(
       scope_method_name: method_name,
-      new_method_name: with_method_name
+      new_method_name: with_method_name,
     )
 
     alias_method_chain(target: method_name, feature: aspect, position:)
@@ -111,7 +124,7 @@ module Aspectual
       end
     when AROUND_ASPECT
       lambda do |*args, **kwargs, &blk|
-        send(aspect, *args, **kwargs, &Proc.new do
+        send(aspect, *args, **kwargs, &proc do
           send(without_method_name, *args, **kwargs, &blk)
         end)
       end
@@ -127,12 +140,11 @@ module Aspectual
   end
 
   def scope_method_to_parent(scope_method_name:, new_method_name:)
-    case
-    when public_method_defined?(scope_method_name)
+    if public_method_defined?(scope_method_name)
       public new_method_name
-    when protected_method_defined?(scope_method_name)
+    elsif protected_method_defined?(scope_method_name)
       protected new_method_name
-    when private_method_defined?(scope_method_name)
+    elsif private_method_defined?(scope_method_name)
       private new_method_name
     end
   end
@@ -175,12 +187,9 @@ module Aspectual
   end
 
   def merge_aspects(method_name:, new_aspects:)
-    # Special default value for next method added
-    @@_aspects ||= {NEXT_METHOD_ADDED_KEY => BLANK_ASPECT}
+    return defined_aspects if new_aspects == BLANK_ASPECT
 
-    return @@_aspects if new_aspects == BLANK_ASPECT
-
-    @@_aspects.merge!({method_name => new_aspects}) do |aspected_method_name, old_config, new_config|
+    @_aspects = defined_aspects.merge({ method_name => new_aspects }) do |_aspected_method_name, old_config, new_config|
       old_config.merge(new_config) do |aspect, old_aspects, new_aspects|
         case aspect
         when BEFORE_ASPECT, AROUND_ASPECT
