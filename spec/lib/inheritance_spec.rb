@@ -3,7 +3,7 @@
 require_relative '../../lib/aspectual'
 
 describe Aspectual do
-  class TestClass
+  class ParentClass
     extend Aspectual
 
     attr_reader :methods_called
@@ -69,7 +69,7 @@ describe Aspectual do
     aspects :super_child_aspect_super_child_method_parent_definition, before: :super_child_aspect_method
   end
 
-  class ChildClass < TestClass
+  class ChildClass < ParentClass
     aspects :parent_aspect_parent_method_child_definition, before: :parent_aspect_method
     aspects :parent_aspect_child_method_child_definition, before: :parent_aspect_method
     aspects :parent_aspect_super_child_method_child_definition, before: :parent_aspect_method
@@ -125,7 +125,7 @@ describe Aspectual do
     end
   end
 
-  class OtherChildClass < TestClass
+  class OtherChildClass < ParentClass
     aspects :parent_aspect_super_child_method_child_definition, before: :parent_aspect_method
     aspects :child_aspect_parent_method_child_definition, before: :child_aspect_method
     aspects :child_aspect_super_child_method_child_definition, before: :child_aspect_method
@@ -241,7 +241,7 @@ describe Aspectual do
     describe 'methods defined on the parent' do
       describe 'can have aspects from a parent defined on the child' do
         it 'does not affect the parent class' do
-          result = TestClass.new.parent_aspect_parent_method_child_definition
+          result = ParentClass.new.parent_aspect_parent_method_child_definition
 
           expect(result.methods_called).to eq(
             %w[
@@ -285,7 +285,7 @@ describe Aspectual do
 
       describe 'can have aspects from a parent defined on the super child' do
         it 'does not affect the parent class' do
-          result = TestClass.new.parent_aspect_parent_method_super_child_definition
+          result = ParentClass.new.parent_aspect_parent_method_super_child_definition
 
           expect(result.methods_called).to eq(
             %w[
@@ -328,10 +328,13 @@ describe Aspectual do
 
       describe 'can have aspects from a child defined on the parent' do
         it 'does not affect the parent class' do
-          # The specified aspect is not defined on the parent class
-          expect do
-            TestClass.new.child_aspect_parent_method_parent_definition
-          end.to raise_error(NoMethodError)
+          result = ParentClass.new.child_aspect_parent_method_parent_definition
+
+          expect(result.methods_called).to eq(
+            %w[
+              child_aspect_parent_method_parent_definition
+            ],
+          )
         end
 
         it 'does affect the child class' do
@@ -370,7 +373,7 @@ describe Aspectual do
 
       describe 'can have aspects from a child defined on the child' do
         it 'does not affect the parent class' do
-          result = TestClass.new.child_aspect_parent_method_child_definition
+          result = ParentClass.new.child_aspect_parent_method_child_definition
 
           expect(result.methods_called).to eq(
             %w[
@@ -415,7 +418,7 @@ describe Aspectual do
 
       describe 'can have aspects from a child defined on the super child' do
         it 'does not affect the parent class' do
-          result = TestClass.new.child_aspect_parent_method_super_child_definition
+          result = ParentClass.new.child_aspect_parent_method_super_child_definition
 
           expect(result.methods_called).to eq(
             %w[
@@ -458,24 +461,33 @@ describe Aspectual do
 
       describe 'can have aspects from a super child defined on the parent' do
         it 'does not affect the parent class' do
-          # The specified aspect is not defined on the parent class
-          expect do
-            TestClass.new.super_child_aspect_parent_method_parent_definition
-          end.to raise_error(NoMethodError)
+          result = ParentClass.new.super_child_aspect_parent_method_parent_definition
+
+          expect(result.methods_called).to eq(
+            %w[
+              super_child_aspect_parent_method_parent_definition
+            ],
+          )
         end
 
         it 'does not affect the child class' do
-          # The specified aspect is not defined on the child class
-          expect do
-            ChildClass.new.super_child_aspect_parent_method_parent_definition
-          end.to raise_error(NoMethodError)
+          result = ChildClass.new.super_child_aspect_parent_method_parent_definition
+
+          expect(result.methods_called).to eq(
+            %w[
+              super_child_aspect_parent_method_parent_definition
+            ],
+          )
         end
 
         it 'does not affect the other child class' do
-          # The specified aspect is not defined on the other child class
-          expect do
-            ChildClass.new.super_child_aspect_parent_method_parent_definition
-          end.to raise_error(NoMethodError)
+          result = OtherChildClass.new.super_child_aspect_parent_method_parent_definition
+
+          expect(result.methods_called).to eq(
+            %w[
+              super_child_aspect_parent_method_parent_definition
+            ],
+          )
         end
 
         it 'does affect the super child class' do
@@ -492,7 +504,7 @@ describe Aspectual do
 
       describe 'can have aspects from a super child defined on the child' do
         it 'does not affect the parent class' do
-          result = TestClass.new.super_child_aspect_parent_method_child_definition
+          result = ParentClass.new.super_child_aspect_parent_method_child_definition
 
           expect(result.methods_called).to eq(
             %w[
@@ -502,17 +514,23 @@ describe Aspectual do
         end
 
         it 'does not affect the child class' do
-          # The specified aspect is not defined on the child class
-          expect do
-            ChildClass.new.super_child_aspect_parent_method_child_definition
-          end.to raise_error(NoMethodError)
+          result = ChildClass.new.super_child_aspect_parent_method_child_definition
+
+          expect(result.methods_called).to eq(
+            %w[
+              super_child_aspect_parent_method_child_definition
+            ],
+          )
         end
 
         it 'does not affect the other child class' do
-          # The specified aspect is not defined on the other child class
-          expect do
-            ChildClass.new.super_child_aspect_parent_method_child_definition
-          end.to raise_error(NoMethodError)
+          result = OtherChildClass.new.super_child_aspect_parent_method_child_definition
+
+          expect(result.methods_called).to eq(
+            %w[
+              super_child_aspect_parent_method_child_definition
+            ],
+          )
         end
 
         it 'does affect the super child class' do
@@ -529,7 +547,7 @@ describe Aspectual do
 
       describe 'can have aspects from a super child defined on the super child' do
         it 'does not affect the parent class' do
-          result = TestClass.new.super_child_aspect_parent_method_super_child_definition
+          result = ParentClass.new.super_child_aspect_parent_method_super_child_definition
 
           expect(result.methods_called).to eq(
             %w[
@@ -576,7 +594,7 @@ describe Aspectual do
         it 'does not affect the parent class' do
           # The specified method is not defined on the parent class
           expect do
-            TestClass.new.parent_aspect_child_method_parent_definition
+            ParentClass.new.parent_aspect_child_method_parent_definition
           end.to raise_error(NoMethodError)
         end
 
@@ -618,7 +636,7 @@ describe Aspectual do
         it 'does not affect the parent class' do
           # The specified method is not defined on the parent class
           expect do
-            TestClass.new.parent_aspect_child_method_child_definition
+            ParentClass.new.parent_aspect_child_method_child_definition
           end.to raise_error(NoMethodError)
         end
 
@@ -659,7 +677,7 @@ describe Aspectual do
         it 'does not affect the parent class' do
           # The specified method is not defined on the parent class
           expect do
-            TestClass.new.parent_aspect_child_method_super_child_definition
+            ParentClass.new.parent_aspect_child_method_super_child_definition
           end.to raise_error(NoMethodError)
         end
 
@@ -699,7 +717,7 @@ describe Aspectual do
         it 'does not affect the parent class' do
           # The specified method is not defined on the parent class
           expect do
-            TestClass.new.child_aspect_child_method_parent_definition
+            ParentClass.new.child_aspect_child_method_parent_definition
           end.to raise_error(NoMethodError)
         end
 
@@ -741,7 +759,7 @@ describe Aspectual do
         it 'does not affect the parent class' do
           # The specified method is not defined on the parent class
           expect do
-            TestClass.new.child_aspect_child_method_super_child_definition
+            ParentClass.new.child_aspect_child_method_super_child_definition
           end.to raise_error(NoMethodError)
         end
 
@@ -781,22 +799,28 @@ describe Aspectual do
         it 'does not affect the parent class' do
           # The specified method is not defined on the parent class
           expect do
-            TestClass.new.super_child_aspect_child_method_parent_definition
+            ParentClass.new.super_child_aspect_child_method_parent_definition
           end.to raise_error(NoMethodError)
         end
 
         it 'does not affect the child class' do
-          # The specified aspect is not defined on the child class
-          expect do
-            ChildClass.new.super_child_aspect_child_method_parent_definition
-          end.to raise_error(NoMethodError)
+          result = ChildClass.new.super_child_aspect_child_method_parent_definition
+
+          expect(result.methods_called).to eq(
+            %w[
+              super_child_aspect_child_method_parent_definition
+            ],
+          )
         end
 
         it 'does not affect the other child class' do
-          # The specified aspect is not defined on the other child class
-          expect do
-            OtherChildClass.new.super_child_aspect_child_method_parent_definition
-          end.to raise_error(NoMethodError)
+          result = OtherChildClass.new.super_child_aspect_child_method_parent_definition
+
+          expect(result.methods_called).to eq(
+            %w[
+              super_child_aspect_other_child_method_parent_definition
+            ],
+          )
         end
 
         it 'does affect the super child class' do
@@ -815,22 +839,28 @@ describe Aspectual do
         it 'does not affect the parent class' do
           # The specified method is not defined on the parent class
           expect do
-            TestClass.new.super_child_aspect_child_method_child_definition
+            ParentClass.new.super_child_aspect_child_method_child_definition
           end.to raise_error(NoMethodError)
         end
 
         it 'does not affect the child class' do
-          # The specified aspect is not defined on the child class
-          expect do
-            ChildClass.new.super_child_aspect_child_method_child_definition
-          end.to raise_error(NoMethodError)
+          result = ChildClass.new.super_child_aspect_child_method_child_definition
+
+          expect(result.methods_called).to eq(
+            %w[
+              super_child_aspect_child_method_child_definition
+            ],
+          )
         end
 
         it 'does not affect the other child class' do
-          # The specified aspect is not defined on the other child class
-          expect do
-            OtherChildClass.new.super_child_aspect_child_method_child_definition
-          end.to raise_error(NoMethodError)
+          result = OtherChildClass.new.super_child_aspect_child_method_child_definition
+
+          expect(result.methods_called).to eq(
+            %w[
+              super_child_aspect_other_child_method_other_child_definition
+            ],
+          )
         end
 
         it 'does affect the super child class' do
@@ -849,7 +879,7 @@ describe Aspectual do
         it 'does not affect the parent class' do
           # The specified method is not defined on the parent class
           expect do
-            TestClass.new.super_child_aspect_child_method_super_child_definition
+            ParentClass.new.super_child_aspect_child_method_super_child_definition
           end.to raise_error(NoMethodError)
         end
 
@@ -891,7 +921,7 @@ describe Aspectual do
         it 'does not affect the parent class' do
           # The specified method is not defined on the parent class
           expect do
-            TestClass.new.parent_aspect_super_child_method_parent_definition
+            ParentClass.new.parent_aspect_super_child_method_parent_definition
           end.to raise_error(NoMethodError)
         end
 
@@ -926,7 +956,7 @@ describe Aspectual do
       it 'does not affect the parent class' do
         # The specified method is not defined on the parent class
         expect do
-          TestClass.new.parent_aspect_super_child_method_child_definition
+          ParentClass.new.parent_aspect_super_child_method_child_definition
         end.to raise_error(NoMethodError)
       end
 
@@ -960,7 +990,7 @@ describe Aspectual do
       it 'does not affect the parent class' do
         # The specified method is not defined on the parent class
         expect do
-          TestClass.new.parent_aspect_super_child_method_super_child_definition
+          ParentClass.new.parent_aspect_super_child_method_super_child_definition
         end.to raise_error(NoMethodError)
       end
 
@@ -994,7 +1024,7 @@ describe Aspectual do
       it 'does not affect the parent class' do
         # The specified method is not defined on the parent class
         expect do
-          TestClass.new.child_aspect_super_child_method_parent_definition
+          ParentClass.new.child_aspect_super_child_method_parent_definition
         end.to raise_error(NoMethodError)
       end
 
@@ -1028,7 +1058,7 @@ describe Aspectual do
       it 'does not affect the parent class' do
         # The specified method is not defined on the parent class
         expect do
-          TestClass.new.child_aspect_super_child_method_child_definition
+          ParentClass.new.child_aspect_super_child_method_child_definition
         end.to raise_error(NoMethodError)
       end
 
@@ -1062,7 +1092,7 @@ describe Aspectual do
       it 'does not affect the parent class' do
         # The specified method is not defined on the parent class
         expect do
-          TestClass.new.child_aspect_super_child_method_super_child_definition
+          ParentClass.new.child_aspect_super_child_method_super_child_definition
         end.to raise_error(NoMethodError)
       end
 
@@ -1096,7 +1126,7 @@ describe Aspectual do
       it 'does not affect the parent class' do
         # The specified method is not defined on the parent class
         expect do
-          TestClass.new.super_child_aspect_super_child_method_parent_definition
+          ParentClass.new.super_child_aspect_super_child_method_parent_definition
         end.to raise_error(NoMethodError)
       end
 
@@ -1130,7 +1160,7 @@ describe Aspectual do
       it 'does not affect the parent class' do
         # The specified method is not defined on the parent class
         expect do
-          TestClass.new.super_child_aspect_super_child_method_child_definition
+          ParentClass.new.super_child_aspect_super_child_method_child_definition
         end.to raise_error(NoMethodError)
       end
 

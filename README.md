@@ -30,12 +30,12 @@ Aspectual supports implicitly defining your aspects directly before a method.
 This method of defining aspects will hook into the next defined method,
 assigning those aspects to that method:
 
-    aspects before: :logging, around: fancy_logging, after: :more_logging
+    aspects before: :logging, after: :more_logging
     def foo
       "foo"
     end
 
-    aspects before: [:notify_user, :notify_admin], around: [:setup_and_teardown, :play_background_music], after: [:remove_temp_files, :play_sound]
+    aspects before: [:notify_user, :notify_admin], after: [:remove_temp_files, :play_sound]
     def bar
       "bar"
     end
@@ -50,9 +50,9 @@ method is first defined on the associated class.
       "foo"
     end
 
-    aspects :foo, before: :logging, around: fancy_logging, after: :more_logging
+    aspects :foo, before: :logging, after: :more_logging
 
-    aspects :bar, before: [:notify_user, :notify_admin], around: [:setup_and_teardown, :play_background_music], after: [:remove_temp_files, :play_sound]
+    aspects :bar, before: [:notify_user, :notify_admin], after: [:remove_temp_files, :play_sound]
 
     def bar
       "bar"
@@ -66,7 +66,7 @@ definition of the named method, to support child classes inheriting aspected
 behaviors.
 
     class Foo
-      aspects :foo, before: :logging, around: fancy_logging, after: :more_logging
+      aspects :foo, before: :logging, after: :more_logging
     end
 
     class Bar < Foo
@@ -79,7 +79,7 @@ This behavior means that defining an aspect on an interface that is implemented
 will require a call to `super` to invoke those aspects:
 
     class Foo
-      aspects :foo, before: :logging, around: fancy_logging, after: :more_logging
+      aspects :foo, before: :logging, after: :more_logging
       def foo
         "foo"
       end
@@ -97,6 +97,11 @@ will require a call to `super` to invoke those aspects:
         "baz"
       end
     end
+
+### Parameters & Return Values
+
+Aspects do not affect the return value of the method they wrap, and receive all
+the same arguments as that method.
 
 ## Contributing
 

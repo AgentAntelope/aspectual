@@ -3,7 +3,7 @@
 require_relative '../../lib/aspectual'
 
 describe Aspectual do
-  class TestClass
+  class ScopingTestClass
     extend Aspectual
 
     attr_reader :methods_called
@@ -74,7 +74,7 @@ describe Aspectual do
 
   describe 'public methods' do
     it 'can have varying accessibility aspects' do
-      test_instance = TestClass.new.public_method
+      test_instance = ScopingTestClass.new.public_method
       expect(test_instance.methods_called).to eq(%w[
                                                    public_aspect_method
                                                    protected_aspect_method
@@ -84,14 +84,14 @@ describe Aspectual do
     end
 
     it 'stays public' do
-      test_instance = TestClass.new
+      test_instance = ScopingTestClass.new
       expect(test_instance.public_methods).to include(:public_method)
     end
   end
 
   describe 'protected methods' do
     it 'can have varying accessibility aspects' do
-      test_instance = TestClass.new.send(:protected_method)
+      test_instance = ScopingTestClass.new.send(:protected_method)
       expect(test_instance.methods_called).to eq(%w[
                                                    public_aspect_method
                                                    protected_aspect_method
@@ -101,14 +101,14 @@ describe Aspectual do
     end
 
     it 'stays protected' do
-      test_instance = TestClass.new
+      test_instance = ScopingTestClass.new
       expect(test_instance.protected_methods).to include(:protected_method)
     end
   end
 
   describe 'private methods' do
     it 'can have varying accessibility aspects' do
-      test_instance = TestClass.new.send(:private_method)
+      test_instance = ScopingTestClass.new.send(:private_method)
       expect(test_instance.methods_called).to eq(%w[
                                                    public_aspect_method
                                                    protected_aspect_method
@@ -118,7 +118,7 @@ describe Aspectual do
     end
 
     it 'stays private' do
-      test_instance = TestClass.new
+      test_instance = ScopingTestClass.new
       expect(test_instance.private_methods).to include(:private_method)
     end
   end
