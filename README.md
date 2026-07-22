@@ -1,4 +1,4 @@
-[![Gem Version](https://badge.fury.io/rb/aspectual.png)](http://badge.fury.io/rb/aspectual)
+[![Gem Version](https://badge.fury.io/rb/aspectual.svg)](https://badge.fury.io/rb/aspectual)
 
 # Aspectual
 
@@ -97,6 +97,14 @@ will require a call to `super` to invoke those aspects:
         "baz"
       end
     end
+
+### Limitations
+
+Because Aspectual defines methods dynamically, anything that overwrites method
+definitions at call time will possibly clobber those newly defined methods;
+notably, that means that Aspectual is incompatible with Sorbet.
+
+<https://sorbet.org/docs/unsupported#creating-method-aliases-to-methods-in-parent-classes>
 
 ## Contributing
 
