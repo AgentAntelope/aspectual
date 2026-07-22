@@ -2,5 +2,9 @@
 
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in overload.gemspec
+gem 'bundler'
+gem 'rspec'
+gem 'rubocop'
+gem 'rubocop-rspec'
+
 gemspec

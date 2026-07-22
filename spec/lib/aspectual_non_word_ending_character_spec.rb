@@ -49,7 +49,6 @@ class NonWordEndingCharacterTestClass
 
   def assign_aspect_method=
     methods_called << 'assign_aspect_method='
-    self
   end
 
   aspects before: :assign_aspect_method=
@@ -61,7 +60,6 @@ class NonWordEndingCharacterTestClass
   aspects before: :assign_aspect_method=
   def assign_test_method=
     methods_called << 'assign_test_method='
-    self
   end
 end
 
@@ -69,7 +67,8 @@ describe Aspectual do
   describe 'methods ending in non-standard characters' do
     describe 'predicate methods' do
       it 'can handle predicate aspects' do
-        test_instance = NonWordEndingCharacterTestClass.new.predicate_test_method
+        test_instance = NonWordEndingCharacterTestClass.new
+        test_instance.predicate_test_method
         expect(test_instance.methods_called).to eq(%w[
                                                      predicate_aspect_method?
                                                      predicate_test_method
@@ -77,7 +76,8 @@ describe Aspectual do
       end
 
       it 'can handle predicate methods' do
-        test_instance = NonWordEndingCharacterTestClass.new.predicate_test_method?
+        test_instance = NonWordEndingCharacterTestClass.new
+        test_instance.predicate_test_method?
         expect(test_instance.methods_called).to eq(%w[
                                                      predicate_aspect_method?
                                                      predicate_test_method?
@@ -87,7 +87,8 @@ describe Aspectual do
 
     describe 'bang methods' do
       it 'can handle bang aspects' do
-        test_instance = NonWordEndingCharacterTestClass.new.bang_test_method
+        test_instance = NonWordEndingCharacterTestClass.new
+        test_instance.bang_test_method
         expect(test_instance.methods_called).to eq(%w[
                                                      bang_aspect_method!
                                                      bang_test_method
@@ -95,7 +96,8 @@ describe Aspectual do
       end
 
       it 'can handle bang methods' do
-        test_instance = NonWordEndingCharacterTestClass.new.bang_test_method!
+        test_instance = NonWordEndingCharacterTestClass.new
+        test_instance.bang_test_method!
         expect(test_instance.methods_called).to eq(%w[
                                                      bang_aspect_method!
                                                      bang_test_method!
@@ -105,7 +107,8 @@ describe Aspectual do
 
     describe 'assign methods' do
       it 'can handle assign aspects' do
-        test_instance = NonWordEndingCharacterTestClass.new.assign_test_method
+        test_instance = NonWordEndingCharacterTestClass.new
+        test_instance.assign_test_method
         expect(test_instance.methods_called).to eq(%w[
                                                      assign_aspect_method=
                                                      assign_test_method
@@ -113,7 +116,8 @@ describe Aspectual do
       end
 
       it 'can handle assign methods' do
-        test_instance = NonWordEndingCharacterTestClass.new.send(:assign_test_method=)
+        test_instance = NonWordEndingCharacterTestClass.new
+        test_instance.send(:assign_test_method=)
         expect(test_instance.methods_called).to eq(%w[
                                                      assign_aspect_method=
                                                      assign_test_method=
