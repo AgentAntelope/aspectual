@@ -2,15 +2,17 @@
 # frozen_string_literal: true
 
 module Aspectual
+  # This order is important to ensure we're assigning aspects in the correct
+  # order: Before comes before around, so needs to be added to the method after
   VALID_ASPECTS = [
+    AROUND_ASPECT = :around,
     BEFORE_ASPECT = :before,
     AFTER_ASPECT  = :after,
-    AROUND_ASPECT = :around,
   ].freeze
 
   BLANK_ASPECT = {
-    BEFORE_ASPECT => [].freeze,
     AROUND_ASPECT => [].freeze,
+    BEFORE_ASPECT => [].freeze,
     AFTER_ASPECT => [].freeze,
   }.freeze
 
