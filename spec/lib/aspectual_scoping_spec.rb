@@ -13,48 +13,19 @@ class ScopingTestClass
     @methods_called = []
   end
 
-  public def public_aspect_method
+  def public_aspect_method
     methods_called << 'public_aspect_method'
     self
   end
 
-  protected def protected_aspect_method
-    methods_called << 'protected_aspect_method'
-    self
-  end
-
-  private def private_aspect_method
-    methods_called << 'private_aspect_method'
-    self
-  end
-
   aspects before: %i[
     public_aspect_method
     protected_aspect_method
     private_aspect_method
   ]
-  public def public_method
+
+  def public_method
     methods_called << 'public_method'
-    self
-  end
-
-  aspects before: %i[
-    public_aspect_method
-    protected_aspect_method
-    private_aspect_method
-  ]
-  protected def protected_method
-    methods_called << 'protected_method'
-    self
-  end
-
-  aspects before: %i[
-    public_aspect_method
-    protected_aspect_method
-    private_aspect_method
-  ]
-  private def private_method
-    methods_called << 'private_method'
     self
   end
 
@@ -67,6 +38,42 @@ class ScopingTestClass
   aspects before: :private_aspect_method
   def test_private_aspect_method
     methods_called << 'private_test_method'
+    self
+  end
+
+  protected
+
+  def protected_aspect_method
+    methods_called << 'protected_aspect_method'
+    self
+  end
+
+  aspects before: %i[
+    public_aspect_method
+    protected_aspect_method
+    private_aspect_method
+  ]
+
+  def protected_method
+    methods_called << 'protected_method'
+    self
+  end
+
+  private
+
+  def private_aspect_method
+    methods_called << 'private_aspect_method'
+    self
+  end
+
+  aspects before: %i[
+    public_aspect_method
+    protected_aspect_method
+    private_aspect_method
+  ]
+
+  def private_method
+    methods_called << 'private_method'
     self
   end
 end

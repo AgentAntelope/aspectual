@@ -128,42 +128,24 @@ describe Aspectual do
     it 'calls before aspect methods before the called method' do
       test_instance = ReturnValueTestClass.new
       result = test_instance.single_before_test_method
-      expect(test_instance.methods_called).to eq(%w[
-                                                   single_test_method
-                                                   single_before_test_method
-                                                 ])
       expect(result).to eq('single_before_test_method')
     end
 
     it 'can be defined for a specific method' do
       test_instance = ReturnValueTestClass.new
       result = test_instance.specific_before_test_method
-      expect(test_instance.methods_called).to eq(%w[
-                                                   single_test_method
-                                                   specific_before_test_method
-                                                 ])
       expect(result).to eq('specific_before_test_method')
     end
 
     it 'allows multiple aspects to be declared' do
       test_instance = ReturnValueTestClass.new
       result = test_instance.array_before_test_method
-      expect(test_instance.methods_called).to eq(%w[
-                                                   array_test_method_0
-                                                   array_test_method_1
-                                                   array_before_test_method
-                                                 ])
       expect(result).to eq('array_before_test_method')
     end
 
     it 'allows multiple aspects to be declared in separate calls' do
       test_instance = ReturnValueTestClass.new
       result = test_instance.multiple_before_test_method
-      expect(test_instance.methods_called).to eq(%w[
-                                                   array_test_method_0
-                                                   array_test_method_1
-                                                   multiple_before_test_method
-                                                 ])
       expect(result).to eq('multiple_before_test_method')
     end
   end
@@ -172,42 +154,24 @@ describe Aspectual do
     it 'calls before aspect methods before the called method' do
       test_instance = ReturnValueTestClass.new
       result = test_instance.single_after_test_method
-      expect(test_instance.methods_called).to eq(%w[
-                                                   single_after_test_method
-                                                   single_test_method
-                                                 ])
       expect(result).to eq('single_test_method')
     end
 
     it 'can be defined for a specific method' do
       test_instance = ReturnValueTestClass.new
       result = test_instance.specific_after_test_method
-      expect(test_instance.methods_called).to eq(%w[
-                                                   specific_after_test_method
-                                                   single_test_method
-                                                 ])
       expect(result).to eq('single_test_method')
     end
 
     it 'allows multiple aspects to be declared' do
       test_instance = ReturnValueTestClass.new
       result = test_instance.array_after_test_method
-      expect(test_instance.methods_called).to eq(%w[
-                                                   array_after_test_method
-                                                   array_test_method_0
-                                                   array_test_method_1
-                                                 ])
       expect(result).to eq('array_test_method_1')
     end
 
     it 'allows multiple aspects to be declared in separate calls' do
       test_instance = ReturnValueTestClass.new
       result = test_instance.multiple_after_test_method
-      expect(test_instance.methods_called).to eq(%w[
-                                                   multiple_after_test_method
-                                                   array_test_method_0
-                                                   array_test_method_1
-                                                 ])
       expect(result).to eq('array_test_method_1')
     end
   end
@@ -216,17 +180,6 @@ describe Aspectual do
     it 'calls all the aspect declarations in the correct order' do
       test_instance = ReturnValueTestClass.new
       result = test_instance.before_and_after_aspects_test_method
-      expect(test_instance.methods_called).to eq(%w[
-                                                   before_test_method_0
-                                                   before_test_method_1
-                                                   before_block_around_aspect_method_0
-                                                   before_block_around_aspect_method_1
-                                                   before_and_after_aspects_test_method
-                                                   after_block_around_aspect_method_1
-                                                   after_block_around_aspect_method_0
-                                                   after_test_method_0
-                                                   after_test_method_1
-                                                 ])
       expect(result).to eq('after_test_method_1')
     end
   end

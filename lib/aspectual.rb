@@ -3,6 +3,10 @@
 
 # Aspectual allows Aspect Oriented Programming in Ruby.
 module Aspectual
+  require_relative 'aspectual/method_construction'
+
+  include MethodConstruction
+
   # This order is important to ensure we're assigning aspects in the correct
   # order: Before comes before around, so needs to be added to the method after
   VALID_ASPECTS = [
@@ -11,11 +15,7 @@ module Aspectual
     AFTER_ASPECT  = :after,
   ].freeze
 
-  BLANK_ASPECT = {
-    AROUND_ASPECT => [].freeze,
-    BEFORE_ASPECT => [].freeze,
-    AFTER_ASPECT => [].freeze,
-  }.freeze
+  BLANK_ASPECT = VALID_ASPECTS.to_h { [_1, [].freeze] }.freeze
 
   NEXT_METHOD_ADDED_KEY = :_next_method_added
 
@@ -36,7 +36,9 @@ module Aspectual
 
       # If we already defined the method we're adding aspects for, we need to
       # process that straight away.
-      add_aspects_to_method(method_name:) if instance_methods.include?(method_name)
+      next unless method_defined?(method_name) || private_method_defined?(method_name)
+
+      add_aspects_to_method(method_name:)
     end
   end
 
@@ -53,142 +55,52 @@ module Aspectual
       klass.is_a?(Aspectual)
     end
 
-    return @_aspects ||= DEFAULT_ASPECTS unless aspected_ancestor
-
-    @defined_aspects = aspected_ancestor.defined_aspects.dup
+    @defined_aspects = Marshal.load(
+      Marshal.dump(
+        aspected_ancestor&.defined_aspects || DEFAULT_ASPECTS,
+      ),
+    )
   end
 
   private
 
   attr_writer :defined_aspects
 
-  def add_aspects_to_method(method_name:)
-    merge_aspects(
-      method_name:,
-      new_aspects: defined_aspects.fetch(NEXT_METHOD_ADDED_KEY, BLANK_ASPECT),
-    )
-
-    aspects_to_add = defined_aspects[method_name]
-
+  def can_define_aspect?(aspects:, method_name:)
     # If there are no defined aspects we have nothing to do
-    return unless aspects_to_add&.any? { |_aspect, methods| methods.any? }
+    aspects.values.any?(&:any?) &&
+      # the method we're adding aspects to needs to have been defined
+      (method_defined?(method_name) || private_method_defined?(method_name))
+  end
+
+  def add_aspects_to_method(method_name:)
     return if @_defining_method
 
-    # Blank out the aspects for the next method added
-    defined_aspects[NEXT_METHOD_ADDED_KEY] = BLANK_ASPECT
+    aspects = calculate_aspects(method_name:)
 
-    return unless method_defined?(method_name)
+    return unless can_define_aspect?(aspects:, method_name:)
 
     # Remove the aspects for this method, in case we see multiple definitions
     # of a single method (i.e. inheritance)
     defined_aspects.delete(method_name)
 
-    VALID_ASPECTS.each do |position|
-      aspects_to_add[position].map do |aspect|
+    aspects.each do |position, positional_aspects|
+      positional_aspects.each do |aspect|
         define_aspect_method(method_name:, position:, aspect:)
       end
     end
   end
 
-  def define_aspect_method(method_name:, position:, aspect:)
-    # This is to prevent us from looping because we're about to define some
-    # methods.
-    @_defining_method = true
-
-    with_method_name = with_aspect_method_name(
-      target: method_name, position:, feature: aspect,
+  def calculate_aspects(method_name:)
+    merge_aspects(
+      method_name:,
+      new_aspects: defined_aspects.fetch(NEXT_METHOD_ADDED_KEY, BLANK_ASPECT),
     )
 
-    with_method_proc = build_with_method_proc(aspect:, position:, method_name:)
+    # Blank out the aspects for the next method added
+    defined_aspects[NEXT_METHOD_ADDED_KEY] = BLANK_ASPECT
 
-    define_method(with_method_name, with_method_proc)
-
-    scope_method_to_parent(
-      scope_method_name: method_name,
-      new_method_name: with_method_name,
-    )
-
-    alias_method_chain(target: method_name, feature: aspect, position:)
-
-    @_defining_method = false
-  end
-
-  def build_with_method_proc(aspect:, position:, method_name:)
-    without_method_name = without_aspect_method_name(
-      target: method_name, position:, feature: aspect,
-    )
-
-    case position
-    when BEFORE_ASPECT
-      lambda do |*args, **kwargs, &blk|
-        # first, call the aspect
-        send(aspect, *args, **kwargs, &blk)
-
-        # then, call the method without the aspect
-        send(without_method_name, *args, **kwargs, &blk)
-      end
-    when AROUND_ASPECT
-      lambda do |*args, **kwargs, &blk|
-        send(aspect, *args, **kwargs, &proc do
-          send(without_method_name, *args, **kwargs, &blk)
-        end)
-      end
-    when AFTER_ASPECT
-      lambda do |*args, **kwargs, &blk|
-        # first, call the method without the aspect
-        send(without_method_name, *args, **kwargs, &blk)
-
-        # then, call the aspect
-        send(aspect, *args, **kwargs, &blk)
-      end
-    end
-  end
-
-  def scope_method_to_parent(scope_method_name:, new_method_name:)
-    if public_method_defined?(scope_method_name)
-      public new_method_name
-    elsif protected_method_defined?(scope_method_name)
-      protected new_method_name
-    elsif private_method_defined?(scope_method_name)
-      private new_method_name
-    end
-  end
-
-  # adapted from ActiveSupport
-  def alias_method_chain(target:, feature:, position:)
-    with_method_name = with_aspect_method_name(target:, position:, feature:)
-    without_method_name = without_aspect_method_name(target:, position:, feature:)
-
-    alias_method(without_method_name, target)
-    alias_method(target, with_method_name)
-
-    scope_method_to_parent(
-      scope_method_name: without_method_name,
-      new_method_name: target,
-    )
-  end
-
-  def with_aspect_method_name(target:, position:, feature:)
-    target, punctuation = *safe_target(target:)
-
-    # Produce something like: :target_with_position_feature (with possible
-    # punctuation on the end)
-    :"#{target}_with_#{position}_#{feature}#{punctuation}"
-  end
-
-  def without_aspect_method_name(target:, position:, feature:)
-    target, punctuation = *safe_target(target:)
-
-    # Produce something like: :target_without_position_feature (with possible
-    # punctuation on the end)
-    :"#{target}_without_#{position}_#{feature}#{punctuation}"
-  end
-
-  def safe_target(target:)
-    # Extract punctuation on methods ending in one of !, ?, or = since e.g.
-    # target?_without_position_feature should properly be
-    # target_without_position_feature?.
-    target.to_s.scan(/(.*)([?!=])?$/).flatten
+    defined_aspects[method_name] || BLANK_ASPECT
   end
 
   def merge_aspects(method_name:, new_aspects:)

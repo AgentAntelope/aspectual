@@ -71,10 +71,12 @@ describe Aspectual do
         kwarg_2: :val_2,
       ) { 'called' }
 
-      expect(test_instance.methods_called).to eq(%w[
-                                                   all_params_aspect_method_block_arg1_arg1_args_arg2_kwarg_1_val_1_kwarg_2_val_2_block_result_called
-                                                   before_all_params_test_method_block_arg1_arg1_args_arg2_kwarg_1_val_1_kwarg_2_val_2_block_result_called
-                                                 ])
+      expect(test_instance.methods_called).to eq(
+        %w[
+          all_params_aspect_method_block_arg1_arg1_args_arg2_kwarg_1_val_1_kwarg_2_val_2_block_result_called
+          before_all_params_test_method_block_arg1_arg1_args_arg2_kwarg_1_val_1_kwarg_2_val_2_block_result_called
+        ],
+      )
     end
 
     it 'can handle around aspects' do
@@ -85,11 +87,13 @@ describe Aspectual do
         kwarg_2: :val_2,
       ) { 'called' }
 
-      expect(test_instance.methods_called).to eq(%w[
-                                                   before_block_block_around_aspect_method_block_arg1_arg1_args_arg2_kwarg_1_val_1_kwarg_2_val_2
-                                                   around_all_params_test_method_block_arg1_arg1_args_arg2_kwarg_1_val_1_kwarg_2_val_2_block_result_called
-                                                   after_block_block_around_aspect_method_block_arg1_arg1_args_arg2_kwarg_1_val_1_kwarg_2_val_2
-                                                 ])
+      expect(test_instance.methods_called).to eq(
+        %w[
+          before_block_block_around_aspect_method_block_arg1_arg1_args_arg2_kwarg_1_val_1_kwarg_2_val_2
+          around_all_params_test_method_block_arg1_arg1_args_arg2_kwarg_1_val_1_kwarg_2_val_2_block_result_called
+          after_block_block_around_aspect_method_block_arg1_arg1_args_arg2_kwarg_1_val_1_kwarg_2_val_2
+        ],
+      )
     end
 
     it 'can handle after aspects' do
@@ -100,10 +104,12 @@ describe Aspectual do
         kwarg_2: :val_2,
       ) { 'called' }
 
-      expect(test_instance.methods_called).to eq(%w[
-                                                   after_all_params_test_method_block_arg1_arg1_args_arg2_kwarg_1_val_1_kwarg_2_val_2_block_result_called
-                                                   all_params_aspect_method_block_arg1_arg1_args_arg2_kwarg_1_val_1_kwarg_2_val_2_block_result_called
-                                                 ])
+      expect(test_instance.methods_called).to eq(
+        %w[
+          after_all_params_test_method_block_arg1_arg1_args_arg2_kwarg_1_val_1_kwarg_2_val_2_block_result_called
+          all_params_aspect_method_block_arg1_arg1_args_arg2_kwarg_1_val_1_kwarg_2_val_2_block_result_called
+        ],
+      )
     end
   end
 end

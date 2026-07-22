@@ -1,3 +1,15 @@
+plugins:
+  - rubocop-rspec
+AllCops:
+  NewCops: enable
+Metrics/BlockLength:
+  Exclude:
+    # rspec blocks can get very long
+    - 'spec/**/*'
+Metrics/ClassLength:
+  Exclude:
+    # our spec Classes can get very long
+    - 'spec/**/*'
 Metrics/ModuleLength:
   CountAsOne:
     - array
@@ -8,9 +20,20 @@ Metrics/MethodLength:
     - array
     - hash
     - method_call
-TrailingCommaInArrayLiteral:
+Naming/VariableNumber:
+  EnforcedStyle: snake_case
+RSpec/ExampleLength:
+  CountAsOne:
+    - array
+    - hash
+    - method_call
+RSpec/NestedGroups:
+  Max: 4
+RSpec/RepeatedExample:
+  Enabled: false
+Style/TrailingCommaInArrayLiteral:
   EnforcedStyleForMultiline: consistent_comma
-TrailingCommaInArguments:
+Style/TrailingCommaInArguments:
   EnforcedStyleForMultiline: consistent_comma
-TrailingCommaInHashLiteral:
+Style/TrailingCommaInHashLiteral:
   EnforcedStyleForMultiline: consistent_comma
