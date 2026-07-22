@@ -18,6 +18,16 @@ class ParentClass
     self
   end
 
+  def overridden_method
+    methods_called << 'overridden_parent_method'
+    self
+  end
+
+  def overridden_aspect_method
+    methods_called << 'overridden_parent_aspect_method'
+    self
+  end
+
   def parent_aspect_parent_method_child_definition
     methods_called << 'parent_aspect_parent_method_child_definition'
     self
@@ -66,6 +76,7 @@ class ParentClass
   aspects :super_child_aspect_parent_method_parent_definition, before: :super_child_aspect_method
   aspects :super_child_aspect_child_method_parent_definition, before: :super_child_aspect_method
   aspects :super_child_aspect_super_child_method_parent_definition, before: :super_child_aspect_method
+  aspects :overridden_method, before: :overridden_aspect_method
 end
 
 class ChildClass < ParentClass
@@ -82,6 +93,20 @@ class ChildClass < ParentClass
     methods_called << 'child_aspect_method'
     self
   end
+
+  def overridden_method
+    methods_called << 'overridden_child_method'
+    self
+  end
+
+  def overridden_aspect_method
+    methods_called << 'overridden_child_aspect_method'
+    self
+  end
+
+  # The parent consumed the definition of the overridden aspect, so we need to
+  # set it again.
+  aspects :overridden_method, before: :overridden_aspect_method
 
   def parent_aspect_child_method_parent_definition
     methods_called << 'parent_aspect_child_method_parent_definition'
@@ -137,6 +162,20 @@ class OtherChildClass < ParentClass
     self
   end
 
+  def overridden_method
+    methods_called << 'overridden_other_child_method'
+    self
+  end
+
+  # The parent consumed the definition of the overridden aspect, so we need to
+  # set it again.
+  aspects :overridden_method, before: :overridden_aspect_method
+
+  def overridden_aspect_method
+    methods_called << 'overridden_other_child_aspect_method'
+    self
+  end
+
   def parent_aspect_child_method_parent_definition
     methods_called << 'parent_aspect_other_child_method_parent_definition'
     self
@@ -188,12 +227,24 @@ class SuperChildClass < ChildClass
   aspects :super_child_aspect_parent_method_super_child_definition, before: :super_child_aspect_method
   aspects :super_child_aspect_child_method_super_child_definition, before: :super_child_aspect_method
 
-  # TODO
-
   def super_child_aspect_method
     methods_called << 'super_child_aspect_method'
     self
   end
+
+  def overridden_method
+    methods_called << 'overridden_super_child_method'
+    self
+  end
+
+  def overridden_aspect_method
+    methods_called << 'overridden_super_child_aspect_method'
+    self
+  end
+
+  # The parent consumed the definition of the overridden aspect, so we need to
+  # set it again.
+  aspects :overridden_method, before: :overridden_aspect_method
 
   def parent_aspect_super_child_method_parent_definition
     methods_called << 'parent_aspect_super_child_method_parent_definition'
@@ -239,6 +290,17 @@ end
 describe Aspectual do
   describe 'aspects across inheritance' do
     describe 'methods defined on the parent' do
+      it 'is unaffected when overridden by descendants' do
+        result = ParentClass.new.overridden_method
+
+        expect(result.methods_called).to eq(
+          %w[
+            overridden_parent_aspect_method
+            overridden_parent_method
+          ],
+        )
+      end
+
       describe 'can have aspects from a parent defined on the child' do
         it 'does not affect the parent class' do
           result = ParentClass.new.parent_aspect_parent_method_child_definition
@@ -572,6 +634,17 @@ describe Aspectual do
     end
 
     describe 'methods defined on the child' do
+      it 'can override parent definitions' do
+        result = ChildClass.new.overridden_method
+
+        expect(result.methods_called).to eq(
+          %w[
+            overridden_child_aspect_method
+            overridden_child_method
+          ],
+        )
+      end
+
       describe 'can have aspects from the parent defined on the parent' do
         it 'does not affect the parent class' do
           # The specified method is not defined on the parent class
@@ -887,6 +960,17 @@ describe Aspectual do
     end
 
     describe 'methods defined on the super child' do
+      it 'can override parent definitions' do
+        result = SuperChildClass.new.overridden_method
+
+        expect(result.methods_called).to eq(
+          %w[
+            overridden_super_child_aspect_method
+            overridden_super_child_method
+          ],
+        )
+      end
+
       describe 'can have aspects from the parent defined on the parent' do
         it 'does not affect the parent class' do
           # The specified method is not defined on the parent class
