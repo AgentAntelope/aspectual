@@ -2,7 +2,7 @@
 
 require_relative '../../lib/aspectual'
 
-class TestClass
+class ReturnValueTestClass
   extend Aspectual
 
   attr_reader :methods_called
@@ -17,268 +17,217 @@ class TestClass
   # decision has been made to go for clarity over brevity.
   def single_test_method
     methods_called << 'single_test_method'
-    self
+    'single_test_method'
   end
 
   def array_test_method_0
     methods_called << 'array_test_method_0'
-    self
+    'array_test_method_0'
   end
 
   def array_test_method_1
     methods_called << 'array_test_method_1'
-    self
+    'array_test_method_1'
   end
 
   def before_test_method_0
     methods_called << 'before_test_method_0'
-    self
+    'before_test_method_0'
   end
 
   def before_test_method_1
     methods_called << 'before_test_method_1'
-    self
+    'before_test_method_1'
+  end
+
+  def around_test_method_0
+    methods_called << 'before_block_around_aspect_method_0'
+    yield
+    methods_called << 'after_block_around_aspect_method_0'
+  end
+
+  def around_test_method_1
+    methods_called << 'before_block_around_aspect_method_1'
+    yield
+    methods_called << 'after_block_around_aspect_method_1'
   end
 
   def after_test_method_0
     methods_called << 'after_test_method_0'
-    self
+    'after_test_method_0'
   end
 
   def after_test_method_1
     methods_called << 'after_test_method_1'
-    self
-  end
-
-  def block_test_method_0
-    methods_called << 'before_block_test_method_0_block'
-    yield
-    methods_called << 'after_block_test_method_0_block'
-    self
-  end
-
-  def block_test_method_1
-    methods_called << 'before_block_test_method_1_block'
-    yield
-    methods_called << 'after_block_test_method_1_block'
-    self
+    'after_test_method_1'
   end
 
   aspects before: :single_test_method
   def single_before_test_method
     methods_called << 'single_before_test_method'
-    self
-  end
-
-  aspects around: :block_test_method_0
-  def single_around_test_method
-    methods_called << 'single_around_test_method'
-    self
+    'single_before_test_method'
   end
 
   aspects after: :single_test_method
   def single_after_test_method
     methods_called << 'single_after_test_method'
-    self
+    'single_after_test_method'
   end
 
   aspects before: %i[array_test_method_0 array_test_method_1]
   def array_before_test_method
     methods_called << 'array_before_test_method'
-    self
+    'array_before_test_method'
   end
 
   aspects before: :array_test_method_0
   aspects before: :array_test_method_1
   def multiple_before_test_method
     methods_called << 'multiple_before_test_method'
-    self
+    'multiple_before_test_method'
   end
 
   def specific_before_test_method
     methods_called << 'specific_before_test_method'
-    self
+    'specific_before_test_method'
   end
   aspects :specific_before_test_method, before: :single_test_method
-
-  aspects around: %i[block_test_method_0 block_test_method_1]
-  def array_around_test_method
-    methods_called << 'array_around_test_method'
-    self
-  end
-
-  aspects around: :block_test_method_0
-  aspects around: :block_test_method_1
-  def multiple_around_test_method
-    methods_called << 'multiple_around_test_method'
-    self
-  end
-
-  def specific_around_test_method
-    methods_called << 'specific_around_test_method'
-    self
-  end
-  aspects :specific_around_test_method, around: :block_test_method_0
 
   aspects after: %i[array_test_method_0 array_test_method_1]
   def array_after_test_method
     methods_called << 'array_after_test_method'
-    self
+    'array_after_test_method'
   end
 
   aspects after: :array_test_method_0
   aspects after: :array_test_method_1
   def multiple_after_test_method
     methods_called << 'multiple_after_test_method'
-    self
+    'multiple_after_test_method'
   end
 
   def specific_after_test_method
     methods_called << 'specific_after_test_method'
-    self
+    'specific_after_test_method'
   end
   aspects :specific_after_test_method, after: :single_test_method
 
   aspects(
     before: %i[before_test_method_0 before_test_method_1],
-    around: %i[block_test_method_0 block_test_method_1],
+    around: %i[around_test_method_0 around_test_method_1],
     after: %i[after_test_method_0 after_test_method_1],
   )
-  def before_around_and_after_aspects_test_method
-    methods_called << 'before_around_and_after_aspects_test_method'
-    self
+  def before_and_after_aspects_test_method
+    methods_called << 'before_and_after_aspects_test_method'
+    'before_and_after_aspects_test_method'
   end
 end
 
 describe Aspectual do
-  describe 'before aspects' do
+  describe 'before aspects do not change return value' do
     it 'calls before aspect methods before the called method' do
-      test_instance = TestClass.new.single_before_test_method
+      test_instance = ReturnValueTestClass.new
+      result = test_instance.single_before_test_method
       expect(test_instance.methods_called).to eq(%w[
                                                    single_test_method
                                                    single_before_test_method
                                                  ])
+      expect(result).to eq('single_before_test_method')
     end
 
     it 'can be defined for a specific method' do
-      test_instance = TestClass.new.specific_before_test_method
+      test_instance = ReturnValueTestClass.new
+      result = test_instance.specific_before_test_method
       expect(test_instance.methods_called).to eq(%w[
                                                    single_test_method
                                                    specific_before_test_method
                                                  ])
+      expect(result).to eq('specific_before_test_method')
     end
 
     it 'allows multiple aspects to be declared' do
-      test_instance = TestClass.new.array_before_test_method
+      test_instance = ReturnValueTestClass.new
+      result = test_instance.array_before_test_method
       expect(test_instance.methods_called).to eq(%w[
                                                    array_test_method_0
                                                    array_test_method_1
                                                    array_before_test_method
                                                  ])
+      expect(result).to eq('array_before_test_method')
     end
 
     it 'allows multiple aspects to be declared in separate calls' do
-      test_instance = TestClass.new.multiple_before_test_method
+      test_instance = ReturnValueTestClass.new
+      result = test_instance.multiple_before_test_method
       expect(test_instance.methods_called).to eq(%w[
                                                    array_test_method_0
                                                    array_test_method_1
                                                    multiple_before_test_method
                                                  ])
+      expect(result).to eq('multiple_before_test_method')
     end
   end
 
-  describe 'after aspects' do
+  describe 'after aspects do change return value' do
     it 'calls before aspect methods before the called method' do
-      test_instance = TestClass.new.single_after_test_method
+      test_instance = ReturnValueTestClass.new
+      result = test_instance.single_after_test_method
       expect(test_instance.methods_called).to eq(%w[
                                                    single_after_test_method
                                                    single_test_method
                                                  ])
+      expect(result).to eq('single_test_method')
     end
 
     it 'can be defined for a specific method' do
-      test_instance = TestClass.new.specific_after_test_method
+      test_instance = ReturnValueTestClass.new
+      result = test_instance.specific_after_test_method
       expect(test_instance.methods_called).to eq(%w[
                                                    specific_after_test_method
                                                    single_test_method
                                                  ])
+      expect(result).to eq('single_test_method')
     end
 
     it 'allows multiple aspects to be declared' do
-      test_instance = TestClass.new.array_after_test_method
+      test_instance = ReturnValueTestClass.new
+      result = test_instance.array_after_test_method
       expect(test_instance.methods_called).to eq(%w[
                                                    array_after_test_method
                                                    array_test_method_0
                                                    array_test_method_1
                                                  ])
+      expect(result).to eq('array_test_method_1')
     end
 
     it 'allows multiple aspects to be declared in separate calls' do
-      test_instance = TestClass.new.multiple_after_test_method
+      test_instance = ReturnValueTestClass.new
+      result = test_instance.multiple_after_test_method
       expect(test_instance.methods_called).to eq(%w[
                                                    multiple_after_test_method
                                                    array_test_method_0
                                                    array_test_method_1
                                                  ])
-    end
-  end
-
-  describe 'around aspects' do
-    it 'calls around aspect methods around the called method' do
-      test_instance = TestClass.new.single_around_test_method
-      expect(test_instance.methods_called).to eq(%w[
-                                                   before_block_test_method_0_block
-                                                   single_around_test_method
-                                                   after_block_test_method_0_block
-                                                 ])
-    end
-
-    it 'can be defined for a specific method' do
-      test_instance = TestClass.new.specific_around_test_method
-      expect(test_instance.methods_called).to eq(%w[
-                                                   before_block_test_method_0_block
-                                                   specific_around_test_method
-                                                   after_block_test_method_0_block
-                                                 ])
-    end
-
-    it 'allows multiple aspects to be declared' do
-      test_instance = TestClass.new.array_around_test_method
-      expect(test_instance.methods_called).to eq(%w[
-                                                   before_block_test_method_0_block
-                                                   before_block_test_method_1_block
-                                                   array_around_test_method
-                                                   after_block_test_method_1_block
-                                                   after_block_test_method_0_block
-                                                 ])
-    end
-
-    it 'allows multiple aspects to be declared in separate calls' do
-      test_instance = TestClass.new.multiple_around_test_method
-      expect(test_instance.methods_called).to eq(%w[
-                                                   before_block_test_method_0_block
-                                                   before_block_test_method_1_block
-                                                   multiple_around_test_method
-                                                   after_block_test_method_1_block
-                                                   after_block_test_method_0_block
-                                                 ])
+      expect(result).to eq('array_test_method_1')
     end
   end
 
   describe 'mixed aspects' do
     it 'calls all the aspect declarations in the correct order' do
-      test_instance = TestClass.new.before_around_and_after_aspects_test_method
+      test_instance = ReturnValueTestClass.new
+      result = test_instance.before_and_after_aspects_test_method
       expect(test_instance.methods_called).to eq(%w[
                                                    before_test_method_0
                                                    before_test_method_1
-                                                   before_block_test_method_0_block
-                                                   before_block_test_method_1_block
-                                                   before_around_and_after_aspects_test_method
-                                                   after_block_test_method_1_block
-                                                   after_block_test_method_0_block
+                                                   before_block_around_aspect_method_0
+                                                   before_block_around_aspect_method_1
+                                                   before_and_after_aspects_test_method
+                                                   after_block_around_aspect_method_1
+                                                   after_block_around_aspect_method_0
                                                    after_test_method_0
                                                    after_test_method_1
                                                  ])
+      expect(result).to eq('after_test_method_1')
     end
   end
 end
