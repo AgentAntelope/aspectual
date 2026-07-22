@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# Aspectual allows Aspect Oriented Programming in Ruby.
 module Aspectual
   # This order is important to ensure we're assigning aspects in the correct
   # order: Before comes before around, so needs to be added to the method after
